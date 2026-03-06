@@ -25,6 +25,11 @@
         "photosPermission": "เลือกรูปสินค้าเพื่อวิเคราะห์",
         "cameraPermission": "ถ่ายรูปสินค้าเพื่อวิเคราะห์"
       }]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "58cf1047-4059-4c69-ab1e-838fd9e701be"
+      }
+    }
   }
 }
