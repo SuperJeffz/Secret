@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # กด build เองได้จาก GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,27 +16,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: ''
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit
 
       - name: Build APK
         run: eas build --platform android --profile preview --non-interactive
-
-      - name: Download APK
-        run: |
-          APK_URL=$(eas build:list --platform android --limit 1 --json --non-interactive | python3 -c "import sys,json; builds=json.load(sys.stdin); print(builds[0]['artifacts']['buildUrl'])")
-          curl -L "$APK_URL" -o secretary-app.apk
-
-      - name: Upload APK as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: secretary-app
-          path: secretary-app.apk
-          retention-days: 30
