@@ -17,7 +17,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#0f0f0f"
       },
-      "package": "com.myapp.secretary",
+      "package": "com.superjeffz.secretaryapp",
       "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "INTERNET"]
     },
     "plugins": [
