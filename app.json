@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "เลขาส่วนตัว",
+    "slug": "secretary-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.myapp.secretary",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ถ่ายรูปสินค้าเพื่อวิเคราะห์อัตโนมัติ",
+        "NSPhotoLibraryUsageDescription": "เลือกรูปสินค้าเพื่อวิเคราะห์อัตโนมัติ"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f0f0f"
+      },
+      "package": "com.myapp.secretary",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "INTERNET"]
+    },
+    "plugins": [
+      ["expo-image-picker", {
+        "photosPermission": "เลือกรูปสินค้าเพื่อวิเคราะห์",
+        "cameraPermission": "ถ่ายรูปสินค้าเพื่อวิเคราะห์"
+      }]
+    ]
+  }
+}
