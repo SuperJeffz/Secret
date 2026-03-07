@@ -106,7 +106,6 @@ textarea.inp{height:76px;resize:none}
   <nav id="nav"></nav>
 </div>
 
-<!-- Add Task -->
 <div class="ov hidden" id="ov-task" onclick="closeOv('ov-task',event)">
   <div class="sh">
     <div class="shh"></div>
@@ -138,7 +137,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Add Event -->
 <div class="ov hidden" id="ov-evt" onclick="closeOv('ov-evt',event)">
   <div class="sh">
     <div class="shh"></div>
@@ -159,7 +157,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Event Detail -->
 <div class="ov hidden" id="ov-edet" onclick="closeEvDet(event)">
   <div class="sh">
     <div class="shh"></div>
@@ -168,7 +165,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Schedule Dialog -->
 <div class="dov hidden" id="dov-sched" onclick="closeDov('dov-sched',event)">
   <div class="dlg" onclick="event.stopPropagation()">
     <div class="dtitle">📅 นัดวันโพส</div>
@@ -222,7 +218,7 @@ window.scheduleSave=function(){
         {tasks:window.tasks,evts:window.evts,updatedAt:serverTimestamp()},{merge:true});
       setSyncBadge('synced');
     }catch(e){setSyncBadge('offline');}
-  },800);
+  }, 800);
 };
 
 function setSyncBadge(s){
@@ -230,6 +226,7 @@ function setSyncBadge(s){
   const [bg,c,l]=m[s]||m.loading;
   const el=document.getElementById('sbadge');
   if(el){el.style.background=bg;el.style.color=c;el.textContent=l;}
+  setSyncBadge._last = s;
 }
 window.setSyncBadge=setSyncBadge;
 </script>
@@ -248,7 +245,10 @@ const fL=d=>{if(!d)return'';return new Date(d+'T00:00:00').toLocaleDateString('t
 const fP=p=>{const n=parseFloat(p);return(!p||isNaN(n))?'':n.toLocaleString('th-TH')+' ฿';};
 
 function render(){
-  if(!window.tasks) return;
+  // ตรวจสอบและกำหนดค่าเริ่มต้นป้องกัน Error .filter()
+  if(!window.tasks) window.tasks=[];
+  if(!window.evts) window.evts=[];
+
   const T=window.tasks, E=window.evts;
   const todos=T.filter(t=>t.stage==='todo');
   const drafts=T.filter(t=>t.stage==='draft');
@@ -265,6 +265,7 @@ function render(){
     (drafts.length?`<span class="hstat">✏️ ${drafts.length}</span>`:'')+
     (posts.length?`<span class="hstat">📤 ${posts.length}</span>`:'')+
     (totW>0?`<span class="hstat money">💰 ${totW.toLocaleString('th-TH')} ฿`:'');
+  
   if(window.setSyncBadge) window.setSyncBadge(window.setSyncBadge._last||'synced');
 
   const pipes=[{l:'งาน',n:todos.length,c:'#888',t:0},null,{l:'ดราฟ',n:drafts.length,c:'#f59e0b',t:1},null,{l:'รอโพส',n:posts.length,c:'#60a5fa',t:2},null,{l:'นัดหมาย',n:up.length,c:'#a78bfa',t:3}];
@@ -296,7 +297,6 @@ function render(){
   }
   document.getElementById('content').innerHTML=h;
   document.getElementById('fab').style.display=curTab>=4?'none':'';
-  if(window.setSyncBadge) window.setSyncBadge('synced');
 }
 
 function emp(i,t,s){return`<div class="empty"><div class="eico">${i}</div><div class="etitle">${t}</div><div class="esub">${s}</div></div>`;}
@@ -311,7 +311,8 @@ function tcard(t,bl,bc,ns){
   let pr=0;
   if(s&&e&&e>s)pr=Math.round(Math.min(Math.max((now-s)/(e-s),0),1)*100);
   const act=ns==='sched'?`onclick="openSched('${t.id}')"`:`onclick="adv('${t.id}','${ns}')"`;
-  return`<div class="card">
+  
+  return `<div class="card">
     ${t.photo?`<img class="cphoto" src="${t.photo}">`:''}
     <div class="crow">
       <div style="flex:1">
@@ -320,7 +321,13 @@ function tcard(t,bl,bc,ns){
           <span class="tag" style="background:${PC[t.priority]}22;color:${PC[t.priority]}">${PL[t.priority]}</span>
           ${fP(t.price)?`<span class="tag" style="background:#f0f0eb;color:#555">💼 ${fP(t.price)}</span>`:''}
         </div>
-        ${(s||e)?`<div class="drow"><span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}</div>${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:'`'}`:''}
+        ${(s||e) ? `
+          <div class="drow">
+            <span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>
+            ${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}
+          </div>
+          ${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}
+        ` : ''}
       </div>
       <button class="delb" onclick="delT('${t.id}')">✕</button>
     </div>
