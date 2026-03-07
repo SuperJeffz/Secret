@@ -4,7 +4,13 @@
     "slug": "secretary-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.myapp.secretary",
@@ -15,16 +21,20 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0f0f0f"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
       "package": "com.superjeffz.secretaryapp",
       "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "INTERNET"]
     },
     "plugins": [
-      ["expo-image-picker", {
-        "photosPermission": "เลือกรูปสินค้าเพื่อวิเคราะห์",
-        "cameraPermission": "ถ่ายรูปสินค้าเพื่อวิเคราะห์"
-      }]
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "เลือกรูปสินค้าเพื่อวิเคราะห์",
+          "cameraPermission": "ถ่ายรูปสินค้าเพื่อวิเคราะห์"
+        }
+      ]
     ],
     "extra": {
       "eas": {
