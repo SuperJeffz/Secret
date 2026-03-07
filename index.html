@@ -187,6 +187,7 @@ textarea.inp{height:76px;resize:none}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
 const app = initializeApp({
   apiKey:"AIzaSyDp3rlayAmk4l_8DUol98BPQBQPxLJbtTA",
   authDomain:"secretary-c3acf.firebaseapp.com",
@@ -195,31 +196,29 @@ const app = initializeApp({
   messagingSenderId:"725117111513",
   appId:"1:725117111513:web:6057958c12b55bf96542c8"
 });
+const db = getFirestore(app);
+const UID = 'superjeffz-main';
 
-let uid=null, fromCloud=false, saveTimer=null;
+let fromCloud=false, saveTimer=null;
 window.tasks=[]; window.evts=[];
 
 setSyncBadge('loading');
-  if(user){
-    uid=user.uid;
-    onSnapshot(doc(db,'users',uid,'data','main'), snap=>{
-      if(snap.exists()){
-        fromCloud=true;
-        window.tasks=snap.data().tasks||[];
-        window.evts=snap.data().evts||[];
-        render();
-      }
-      setSyncBadge('synced');
-    });
+onSnapshot(doc(db,'users',UID,'data','main'), snap=>{
+  if(snap.exists()){
+    fromCloud=true;
+    window.tasks=snap.data().tasks||[];
+    window.evts=snap.data().evts||[];
+    render();
+  }
+  setSyncBadge('synced');
 });
 
 window.scheduleSave=function(){
   setSyncBadge('syncing');
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    if(!uid)return;
     try{
-      await setDoc(doc(db,'users',uid,'data','main'),
+      await setDoc(doc(db,'users',UID,'data','main'),
         {tasks:window.tasks,evts:window.evts,updatedAt:serverTimestamp()},{merge:true});
       setSyncBadge('synced');
     }catch(e){setSyncBadge('offline');}
