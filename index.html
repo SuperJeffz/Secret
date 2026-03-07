@@ -373,8 +373,9 @@ function closeDov(id,e){if(!e||e.target===document.getElementById(id))document.g
 function openAddTask(){
   document.getElementById('t-text').value='';
   document.getElementById('t-price').value='';
-  document.getElementById('t-start').value=today();
-  document.getElementById('t-end').value=plus7(today());
+  const td=today();
+  document.getElementById('t-start').value=td;
+  document.getElementById('t-end').value=plus7(td);
   clearPhoto(); setPri('medium');
   showOv('ov-task');
 }
@@ -407,11 +408,12 @@ function clearPhoto(){photoB64=null;document.getElementById('ph-wrap').classList
 
 function addTask(){
   const text=document.getElementById('t-text').value.trim();
-  if(!text)return;
-  window.tasks.push({id:Date.now()+'',stage:'todo',text,priority:selPri,
-    startDate:document.getElementById('t-start').value,
-    endDate:document.getElementById('t-end').value,
-    price:document.getElementById('t-price').value,
+  if(!text){alert('กรุณาใส่ชื่องาน');return;}
+  if(!Array.isArray(window.tasks)) window.tasks=[];
+  window.tasks.push({id:Date.now()+'',stage:'todo',text,priority:selPri||'medium',
+    startDate:document.getElementById('t-start').value||today(),
+    endDate:document.getElementById('t-end').value||plus7(today()),
+    price:document.getElementById('t-price').value||'',
     photo:photoB64||null});
   window.scheduleSave&&window.scheduleSave();
   closeOv('ov-task');render();
