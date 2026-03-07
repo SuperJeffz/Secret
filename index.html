@@ -163,13 +163,11 @@ textarea.inp{height:76px;resize:none}
   <nav id="nav"></nav>
 </div>
 
-<!-- Sheet: Add Task -->
 <div class="overlay hidden" id="sheet-task" onclick="closeSheetTask(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">➕ เพิ่มงานใหม่</div>
     <div class="sheet-body">
-      <!-- Scan -->
       <div id="scan-section">
         <div id="apikey-warn" class="apikey-bar hidden">
           <span>⚠️</span>
@@ -204,7 +202,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Sheet: Add Event -->
 <div class="overlay hidden" id="sheet-evt" onclick="closeSheetEvt(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -225,7 +222,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Sheet: Event Detail -->
 <div class="overlay hidden" id="sheet-evdet" onclick="closeEvDet(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -234,7 +230,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Dialog: Schedule Post -->
 <div class="dlg-overlay hidden" id="dlg-sched" onclick="closeSched(event)">
   <div class="dlg" onclick="event.stopPropagation()">
     <div class="dlg-title">📅 นัดวันโพส</div>
@@ -250,7 +245,6 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Sheet: Settings -->
 <div class="overlay hidden" id="sheet-settings" onclick="closeSettings(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -454,7 +448,7 @@ function doneCard(ev){
       </div>
       ${fPrice(ev.price)?`<div style="text-align:right;margin-left:10px">
         <div style="font-size:16px;font-weight:800;margin-bottom:4px">${fPrice(ev.price)}</div>
-        <span class="tag" style="background:${ev.paid?'#dcfce7':'#fef3c7'};color:${ev.paid?'#16a34a':'#92400e'}">${ev.paid?'💰 รับแล้ว':'⏳ รอรับ'}</span>
+        <span class="tag" style="background:${ev.paid?'#dcfce7':'#16a34a'};color:${ev.paid?'#16a34a':'#92400e'}">${ev.paid?'💰 รับแล้ว':'⏳ รอรับ'}</span>
       </div>`:''}
     </div>
     ${fPrice(ev.price)?`<button class="pay-btn" style="background:${ev.paid?'#10b981':'#f0f0eb'};color:${ev.paid?'#fff':'#444'}" onclick="event.stopPropagation();togPaid('${ev.id}')">
@@ -676,20 +670,25 @@ async function doScan(base64, mime){
     return;
   }
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    // แก้ไขให้ส่งไปที่ Cloudflare Worker ของพี่
+    const res=await fetch('https://secretary-scan.jiepjiepjiep.workers.dev',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:256,
-        system:'ตอบเฉพาะ JSON: {"name":"ชื่อสินค้าภาษาไทย","price":"ตัวเลขหรือ empty","note":"รายละเอียดสั้น"}',
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:base64}},
-          {type:'text',text:'สินค้าคืออะไร? ถ้าไม่ใช่สินค้าตอบ {"name":"ไม่พบสินค้า","price":"","note":""}'}
-        ]}]
+        apiKey: apiKey,
+        payload: {
+          model:'claude-3-5-sonnet-20240620', // ใช้ชื่อรุ่นที่ถูกต้อง
+          max_tokens: 256,
+          system:'ตอบเฉพาะ JSON: {"name":"ชื่อสินค้าภาษาไทย","price":"ตัวเลขหรือ empty","note":"รายละเอียดสั้น"}',
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:mime,data:base64}},
+            {type:'text',text:'สินค้าคืออะไร? ถ้าไม่ใช่สินค้าตอบ {"name":"ไม่พบสินค้า","price":"","note":""}'}
+          ]}]
+        }
       })
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data?.error?.message||'API Error');
+    if(!res.ok) throw new Error(data?.error?.message||'Worker Error');
     const txt=data.content?.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
     const p=JSON.parse(txt);
     document.getElementById('scan-ov').remove();
