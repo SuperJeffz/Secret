@@ -18,7 +18,7 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .hrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .hstat{font-size:11px;color:#666}
 .hstat.money{color:#f59e0b;font-weight:700}
-.sync-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px}
+.sbadge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px}
 #fab{position:absolute;top:14px;right:18px;width:46px;height:46px;background:#fff;border:none;border-radius:23px;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 #pipe{background:#0f0f0f;border-bottom:1px solid #1a1a1a;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 #pipe::-webkit-scrollbar{display:none}
@@ -30,7 +30,7 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .ni{font-size:22px;line-height:1}
 .nl{font-size:9px;font-weight:600}
 .nd{position:absolute;top:6px;right:25%;min-width:16px;height:16px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px;font-size:9px;color:#fff;font-weight:800}
-.card{background:#fff;border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card{background:#fff;border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);cursor:pointer}
 .ctitle{font-size:16px;font-weight:800;line-height:1.4}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}
@@ -42,13 +42,12 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .crow{display:flex;gap:10px;margin-bottom:12px}
 .adv{width:100%;padding:14px;border:none;border-radius:13px;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
 .cphoto{width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:12px;display:block}
-.delb{width:36px;height:36px;background:#f5f5f0;border:none;border-radius:10px;font-size:16px;color:#ccc;cursor:pointer;flex-shrink:0}
 .empty{display:flex;flex-direction:column;align-items:center;padding:60px 20px;text-align:center}
 .eico{font-size:52px;margin-bottom:12px}
 .etitle{font-size:17px;font-weight:800;color:#555;margin-bottom:6px}
 .esub{font-size:13px;color:#bbb;line-height:1.7}
 .ibox{display:flex;gap:12px;padding:14px;border-radius:14px;border:2px solid;margin-bottom:14px}
-.evc{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:center;border:2px solid transparent;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.evc{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:center;border:2px solid transparent;box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer}
 .evc.today{border-color:#8b5cf6}
 .dayb{width:50px;border-radius:13px;padding:8px 4px;text-align:center;flex-shrink:0}
 .dayn{font-size:22px;font-weight:800;color:#fff;line-height:1.1}
@@ -60,7 +59,6 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .stati+.stati{border-left:1px solid #2a2a2a;padding-left:14px}
 .statl{font-size:10px;color:#555;margin-bottom:4px}
 .statv{font-size:19px;font-weight:800}
-.payb{width:100%;padding:14px;border:none;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:12px}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;flex-direction:column;justify-content:flex-end}
 .sh{background:#fff;border-radius:24px 24px 0 0;padding:18px 20px 0;max-height:93dvh;display:flex;flex-direction:column}
 .shh{width:40px;height:5px;background:#e0e0e0;border-radius:99px;margin:0 auto 4px}
@@ -77,20 +75,20 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 textarea.inp{height:76px;resize:none}
 .r2{display:flex;gap:10px}
 .r2>div{flex:1}
-.btn{width:100%;padding:14px;border:none;border-radius:13px;background:#111;color:#fff;font-size:15px;font-weight:800;cursor:pointer}
-.btn:disabled{background:#ccc}
+.btn{width:100%;padding:14px;border:none;border-radius:13px;background:#111;color:#fff;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px}
 .btng{background:#f0f0eb;color:#555}
+.btnr{background:#fff5f5;color:#ef4444;border:2px solid #fecaca}
 .btr{display:flex;gap:10px}
 .btr .btn{flex:1}
 .prib{display:flex;gap:8px;margin-bottom:14px}
 .pribtn{flex:1;padding:11px;border:none;border-radius:11px;font-size:12px;font-weight:700;cursor:pointer}
 .togr{display:flex;gap:10px;margin-bottom:14px}
 .tog{flex:1;padding:14px;border:none;border-radius:13px;font-size:13px;font-weight:800;cursor:pointer}
-.mbox{display:flex;justify-content:space-between;align-items:center;border:2px solid;border-radius:14px;padding:14px;margin-bottom:14px}
-.photob{width:100%;padding:14px;background:#fafafa;border:2px dashed #e8e8e8;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:12px;font-size:14px;font-weight:700;color:#666;border-style:dashed}
+.photob{width:100%;padding:14px;background:#fafafa;border:2px dashed #e8e8e8;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:12px;font-size:14px;font-weight:700;color:#666}
 .phprev{width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:12px;display:block}
 .phwrap{position:relative;margin-bottom:12px}
 .phdel{position:absolute;top:8px;right:8px;width:30px;height:30px;background:rgba(0,0,0,.6);border:none;border-radius:99px;color:#fff;font-size:14px;cursor:pointer}
+.divider{height:1px;background:#f0f0eb;margin:4px 0 14px}
 .hidden{display:none!important}
 </style>
 </head>
@@ -106,10 +104,11 @@ textarea.inp{height:76px;resize:none}
   <nav id="nav"></nav>
 </div>
 
+<!-- Task Sheet (Add & Edit) -->
 <div class="ov hidden" id="ov-task" onclick="closeOv('ov-task',event)">
   <div class="sh">
     <div class="shh"></div>
-    <div class="sht">➕ เพิ่มงานใหม่</div>
+    <div class="sht" id="task-sh-title">➕ เพิ่มงานใหม่</div>
     <div class="shb">
       <label class="lbl">ชื่องาน *</label>
       <input class="inp" id="t-text" placeholder="เช่น รีวิวครีมบำรุงผิว">
@@ -132,15 +131,18 @@ textarea.inp{height:76px;resize:none}
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
-      <button class="btn" onclick="addTask()">+ บันทึกงาน</button>
+      <button class="btn" id="task-save-btn" onclick="saveTask()">+ บันทึกงาน</button>
+      <div class="divider hidden" id="task-divider"></div>
+      <button class="btn btnr hidden" id="task-del-btn" onclick="delTaskSheet()">🗑 ลบงานนี้</button>
     </div>
   </div>
 </div>
 
+<!-- Event Sheet (Add & Edit) -->
 <div class="ov hidden" id="ov-evt" onclick="closeOv('ov-evt',event)">
   <div class="sh">
     <div class="shh"></div>
-    <div class="sht">📅 เพิ่มนัดหมาย</div>
+    <div class="sht" id="evt-sh-title">📅 เพิ่มนัดหมาย</div>
     <div class="shb">
       <label class="lbl">ชื่อนัดหมาย *</label>
       <input class="inp" id="e-title" placeholder="เช่น ส่งงาน, ประชุม">
@@ -152,19 +154,18 @@ textarea.inp{height:76px;resize:none}
       <input class="inp" id="e-note" placeholder="สถานที่, รายละเอียด">
       <label class="lbl">มูลค่างาน (ถ้ามี)</label>
       <input class="inp" id="e-price" placeholder="0" type="number" inputmode="numeric">
-      <button class="btn" onclick="addEvt()">+ บันทึกนัดหมาย</button>
+      <div class="togr hidden" id="evt-togs">
+        <button class="tog" id="evt-done-tog" onclick="togEvDone()">⬜ ทำเสร็จ?</button>
+        <button class="tog" id="evt-paid-tog" onclick="togEvPaid()">💳 ได้เงิน?</button>
+      </div>
+      <button class="btn" id="evt-save-btn" onclick="saveEvt()">+ บันทึกนัดหมาย</button>
+      <div class="divider hidden" id="evt-divider"></div>
+      <button class="btn btnr hidden" id="evt-del-btn" onclick="delEvtSheet()">🗑 ลบนัดหมายนี้</button>
     </div>
   </div>
 </div>
 
-<div class="ov hidden" id="ov-edet" onclick="closeEvDet(event)">
-  <div class="sh">
-    <div class="shh"></div>
-    <div class="sht" id="edet-title"></div>
-    <div class="shb" id="edet-body"></div>
-  </div>
-</div>
-
+<!-- Schedule Dialog -->
 <div class="dov hidden" id="dov-sched" onclick="closeDov('dov-sched',event)">
   <div class="dlg" onclick="event.stopPropagation()">
     <div class="dtitle">📅 นัดวันโพส</div>
@@ -182,7 +183,8 @@ textarea.inp{height:76px;resize:none}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const app = initializeApp({
   apiKey:"AIzaSyDp3rlayAmk4l_8DUol98BPQBQPxLJbtTA",
@@ -194,62 +196,53 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 const UID = 'superjeffz-main';
+let saveTimer = null;
+window.tasks = []; window.evts = [];
 
-let fromCloud=false, saveTimer=null;
-window.tasks=[]; window.evts=[];
+setBadge('loading');
+onSnapshot(doc(db,'users',UID,'data','main'), snap => {
+  if(snap.exists()){ window.tasks=snap.data().tasks||[]; window.evts=snap.data().evts||[]; render(); }
+  setBadge('synced');
+}, () => setBadge('offline'));
 
-setSyncBadge('loading');
-onSnapshot(doc(db,'users',UID,'data','main'), snap=>{
-  if(snap.exists()){
-    fromCloud=true;
-    window.tasks=snap.data().tasks||[];
-    window.evts=snap.data().evts||[];
-    render();
-  }
-  setSyncBadge('synced');
-});
-
-window.scheduleSave=function(){
-  setSyncBadge('syncing');
+window.scheduleSave = function(){
+  setBadge('syncing');
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(async()=>{
+  saveTimer = setTimeout(async()=>{
     try{
       await setDoc(doc(db,'users',UID,'data','main'),
         {tasks:window.tasks,evts:window.evts,updatedAt:serverTimestamp()},{merge:true});
-      setSyncBadge('synced');
-    }catch(e){setSyncBadge('offline');}
+      setBadge('synced');
+    }catch(e){ setBadge('offline'); }
   }, 800);
 };
 
-function setSyncBadge(s){
-  const m={loading:['#f0f0eb','#888','🔄 กำลังโหลด'],syncing:['#fef3c7','#92400e','⏳ sync...'],synced:['#f0fdf4','#16a34a','☁️ sync แล้ว'],offline:['#fff5f5','#ef4444','❌ ออฟไลน์']};
+function setBadge(s){
+  const m={loading:['#f0f0eb','#888','🔄 โหลด'],syncing:['#fef3c7','#92400e','⏳ sync'],synced:['#f0fdf4','#16a34a','☁️ sync แล้ว'],offline:['#fff5f5','#ef4444','❌ ออฟไลน์']};
   const [bg,c,l]=m[s]||m.loading;
   const el=document.getElementById('sbadge');
   if(el){el.style.background=bg;el.style.color=c;el.textContent=l;}
-  setSyncBadge._last = s;
 }
-window.setSyncBadge=setSyncBadge;
+window.setBadge = setBadge;
 </script>
 
 <script>
 const PC={high:'#ef4444',medium:'#f59e0b',low:'#10b981'};
 const PL={high:'🔴 ด่วน',medium:'🟡 ปกติ',low:'🟢 ไม่เร่ง'};
-let curTab=0, selPri='medium', schedId=null, detId=null, photoB64=null;
+let curTab=0, selPri='medium', schedId=null, editTId=null, editEId=null, photoB64=null;
 
 const pad=n=>String(n).padStart(2,'0');
 const toISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const today=()=>toISO(new Date());
 const plus7=iso=>{const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+7);return toISO(d);};
-const fS=d=>{if(!d)return'';return new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'});};
-const fL=d=>{if(!d)return'';return new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});};
+const fS=d=>d?new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'}):'';
+const fL=d=>d?new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'';
 const fP=p=>{const n=parseFloat(p);return(!p||isNaN(n))?'':n.toLocaleString('th-TH')+' ฿';};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function render(){
-  // ตรวจสอบและกำหนดค่าเริ่มต้นป้องกัน Error .filter()
-  if(!window.tasks) window.tasks=[];
-  if(!window.evts) window.evts=[];
-
-  const T=window.tasks, E=window.evts;
+  if(!Array.isArray(window.tasks))return;
+  const T=window.tasks,E=window.evts||[];
   const todos=T.filter(t=>t.stage==='todo');
   const drafts=T.filter(t=>t.stage==='draft');
   const posts=T.filter(t=>t.stage==='post');
@@ -260,13 +253,12 @@ function render(){
   const totW=totA-totP;
 
   document.getElementById('hstats').innerHTML=
-    `<span class="sync-badge" id="sbadge" style="background:#f0f0eb;color:#888">🔄</span>`+
+    `<span class="sbadge" id="sbadge" style="background:#f0f0eb;color:#888">🔄</span>`+
     (todos.length?`<span class="hstat">📋 ${todos.length}</span>`:'')+
     (drafts.length?`<span class="hstat">✏️ ${drafts.length}</span>`:'')+
     (posts.length?`<span class="hstat">📤 ${posts.length}</span>`:'')+
-    (totW>0?`<span class="hstat money">💰 ${totW.toLocaleString('th-TH')} ฿`:'');
-  
-  if(window.setSyncBadge) window.setSyncBadge(window.setSyncBadge._last||'synced');
+    (totW>0?`<span class="hstat money">💰 ${totW.toLocaleString('th-TH')} ฿</span>`:'');
+  if(window.setBadge)window.setBadge('synced');
 
   const pipes=[{l:'งาน',n:todos.length,c:'#888',t:0},null,{l:'ดราฟ',n:drafts.length,c:'#f59e0b',t:1},null,{l:'รอโพส',n:posts.length,c:'#60a5fa',t:2},null,{l:'นัดหมาย',n:up.length,c:'#a78bfa',t:3}];
   document.getElementById('pipe-inner').innerHTML=pipes.map(p=>p===null?`<span style="color:#333;font-size:13px">›</span>`:`<button class="pp" style="background:${curTab===p.t?p.c:p.c+'28'};color:${curTab===p.t?'#fff':p.c}" onclick="setTab(${p.t})">${p.l}${p.n?' '+p.n:''}</button>`).join('');
@@ -293,7 +285,7 @@ function render(){
   }else{
     if(dn.length)h+=`<div class="statb">${[['มูลค่ารวม',totA,'#fff'],['ได้รับ',totP,'#10b981'],['รอรับ',totW,totW>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
     if(!dn.length)h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');
-    dn.forEach(ev=>{h+=dcard(ev);});
+    dn.forEach(ev=>{h+=ecard(ev);});
   }
   document.getElementById('content').innerHTML=h;
   document.getElementById('fab').style.display=curTab>=4?'none':'';
@@ -310,35 +302,27 @@ function tcard(t,bl,bc,ns){
   const dc=ov?'#ef4444':dl<=2?'#f59e0b':'#10b981';
   let pr=0;
   if(s&&e&&e>s)pr=Math.round(Math.min(Math.max((now-s)/(e-s),0),1)*100);
-  const act=ns==='sched'?`onclick="openSched('${t.id}')"`:`onclick="adv('${t.id}','${ns}')"`;
-  
-  return `<div class="card">
+  const advAct=ns==='sched'?`openSched('${t.id}')`:`adv('${t.id}','${ns}')`;
+  return`<div class="card" onclick="openEditTask('${t.id}')">
     ${t.photo?`<img class="cphoto" src="${t.photo}">`:''}
     <div class="crow">
       <div style="flex:1">
         <div class="ctitle">${esc(t.text)}</div>
         <div class="tags">
-          <span class="tag" style="background:${PC[t.priority]}22;color:${PC[t.priority]}">${PL[t.priority]}</span>
+          <span class="tag" style="background:${PC[t.priority]||'#ccc'}22;color:${PC[t.priority]||'#888'}">${PL[t.priority]||''}</span>
           ${fP(t.price)?`<span class="tag" style="background:#f0f0eb;color:#555">💼 ${fP(t.price)}</span>`:''}
         </div>
-        ${(s||e) ? `
-          <div class="drow">
-            <span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>
-            ${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}
-          </div>
-          ${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}
-        ` : ''}
+        ${(s||e)?`<div class="drow"><span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}</div>${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}`:''}
       </div>
-      <button class="delb" onclick="delT('${t.id}')">✕</button>
     </div>
-    <button class="adv" style="background:${bc}" ${act}>${bl}</button>
+    <button class="adv" style="background:${bc}" onclick="event.stopPropagation();${advAct}">${bl}</button>
   </div>`;
 }
 
 function ecard(ev){
   const it=new Date().toDateString()===new Date(ev.date+'T00:00:00').toDateString();
   const d=new Date(ev.date+'T00:00:00');
-  return`<div class="evc ${it?'today':''}" onclick="openEdet('${ev.id}')">
+  return`<div class="evc ${it?'today':''}" onclick="openEditEvt('${ev.id}')">
     <div class="dayb" style="background:${it?'#8b5cf6':'#111'}">
       <div class="dayn">${d.getDate()}</div>
       <div class="daym" style="color:${it?'#e9d5ff':'#aaa'}">${d.toLocaleDateString('th-TH',{month:'short'})}</div>
@@ -348,39 +332,53 @@ function ecard(ev){
       <div class="evsub">${ev.time?'🕐 '+ev.time+' น. ':''}${esc(ev.note||'')}</div>
       ${fP(ev.price)?`<span class="tag" style="background:#f0f0eb;color:#555;margin-top:6px;display:inline-flex">💼 ${fP(ev.price)}</span>`:''}
     </div>
-    <span style="color:#ddd;font-size:22px">›</span>
-  </div>`;
-}
-
-function dcard(ev){
-  return`<div class="card" onclick="openEdet('${ev.id}')">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start${fP(ev.price)?';margin-bottom:12px':''}">
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:16px">✅</span><span style="font-size:15px;font-weight:800">${esc(ev.title)}</span></div>
-        <span style="font-size:12px;color:#aaa">${fL(ev.date)}${ev.time?' · '+ev.time+' น.':''}</span>
-      </div>
-      ${fP(ev.price)?`<div style="text-align:right;margin-left:10px"><div style="font-size:16px;font-weight:800;margin-bottom:4px">${fP(ev.price)}</div><span class="tag" style="background:${ev.paid?'#dcfce7':'#fef3c7'};color:${ev.paid?'#16a34a':'#92400e'}">${ev.paid?'💰 รับแล้ว':'⏳ รอรับ'}</span></div>`:''}
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+      ${ev.done?`<span class="tag" style="background:#dcfce7;color:#16a34a">✅</span>`:''}
+      ${ev.paid?`<span class="tag" style="background:#dbeafe;color:#1d4ed8">💰</span>`:''}
+      <span style="color:#ddd;font-size:22px">›</span>
     </div>
-    ${fP(ev.price)?`<button class="payb" style="background:${ev.paid?'#10b981':'#f0f0eb'};color:${ev.paid?'#fff':'#444'}" onclick="event.stopPropagation();togPaid('${ev.id}')">${ev.paid?'✅ ได้รับเงินแล้ว':'ยังไม่ได้รับ — กดเพื่อยืนยัน'}</button>`:''}
   </div>`;
 }
 
-function esc(s){return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function setTab(t){curTab=t;render();}
-function onFab(){curTab===3?showOv('ov-evt'):openAddTask();}
+function onFab(){curTab===3?openAddEvt():openAddTask();}
 function showOv(id){document.getElementById(id).classList.remove('hidden');}
 function closeOv(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.add('hidden');}
 function closeDov(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.add('hidden');}
 
+// ── Task Sheet ────────────────────────────────────────────
 function openAddTask(){
+  editTId=null;
+  document.getElementById('task-sh-title').textContent='➕ เพิ่มงานใหม่';
+  document.getElementById('task-save-btn').textContent='+ บันทึกงาน';
+  document.getElementById('task-del-btn').classList.add('hidden');
+  document.getElementById('task-divider').classList.add('hidden');
   document.getElementById('t-text').value='';
   document.getElementById('t-price').value='';
   const td=today();
   document.getElementById('t-start').value=td;
   document.getElementById('t-end').value=plus7(td);
-  clearPhoto(); setPri('medium');
+  clearPhoto();setPri('medium');
   showOv('ov-task');
 }
+
+function openEditTask(id){
+  const t=window.tasks.find(x=>x.id===id);if(!t)return;
+  editTId=id;
+  document.getElementById('task-sh-title').textContent='✏️ แก้ไขงาน';
+  document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
+  document.getElementById('task-del-btn').classList.remove('hidden');
+  document.getElementById('task-divider').classList.remove('hidden');
+  document.getElementById('t-text').value=t.text||'';
+  document.getElementById('t-price').value=t.price||'';
+  document.getElementById('t-start').value=t.startDate||today();
+  document.getElementById('t-end').value=t.endDate||plus7(today());
+  setPri(t.priority||'medium');
+  if(t.photo){photoB64=t.photo;document.getElementById('ph-prev').src=t.photo;document.getElementById('ph-wrap').classList.remove('hidden');}
+  else clearPhoto();
+  showOv('ov-task');
+}
+
 document.getElementById('t-start').addEventListener('change',function(){document.getElementById('t-end').value=plus7(this.value);});
 
 function setPri(p){
@@ -408,27 +406,37 @@ function onPhoto(input){
 }
 function clearPhoto(){photoB64=null;document.getElementById('ph-wrap').classList.add('hidden');document.getElementById('ph-prev').src='';}
 
-function addTask(){
+function saveTask(){
   const text=document.getElementById('t-text').value.trim();
   if(!text){alert('กรุณาใส่ชื่องาน');return;}
-  if(!Array.isArray(window.tasks)) window.tasks=[];
-  window.tasks.push({id:Date.now()+'',stage:'todo',text,priority:selPri||'medium',
+  if(!Array.isArray(window.tasks))window.tasks=[];
+  const data={text,priority:selPri||'medium',
     startDate:document.getElementById('t-start').value||today(),
     endDate:document.getElementById('t-end').value||plus7(today()),
     price:document.getElementById('t-price').value||'',
-    photo:photoB64||null});
+    photo:photoB64||null};
+  if(editTId){
+    window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
+  }else{
+    window.tasks.push({id:Date.now()+'',stage:'todo',...data});
+  }
   window.scheduleSave&&window.scheduleSave();
   closeOv('ov-task');render();
 }
+
+function delTaskSheet(){
+  if(!editTId)return;
+  window.tasks=window.tasks.filter(t=>t.id!==editTId);
+  window.scheduleSave&&window.scheduleSave();
+  closeOv('ov-task');render();
+}
+
 function adv(id,stage){
   window.tasks=window.tasks.map(t=>t.id===id?{...t,stage}:t);
   window.scheduleSave&&window.scheduleSave();render();
 }
-function delT(id){
-  window.tasks=window.tasks.filter(t=>t.id!==id);
-  window.scheduleSave&&window.scheduleSave();render();
-}
 
+// ── Schedule ──────────────────────────────────────────────
 function openSched(id){
   schedId=id;
   const t=window.tasks.find(x=>x.id===id);
@@ -441,6 +449,7 @@ function confirmSched(){
   const d=document.getElementById('sched-d').value;if(!d)return;
   const t=window.tasks.find(x=>x.id===schedId);
   if(t){
+    if(!Array.isArray(window.evts))window.evts=[];
     window.evts.push({id:Date.now()+'',title:t.text,date:d,
       time:document.getElementById('sched-t').value,
       note:'📤 โพสงาน',price:t.price||'',done:false,paid:false});
@@ -450,69 +459,145 @@ function confirmSched(){
   closeDov('dov-sched');curTab=3;render();
 }
 
-function addEvt(){
+// ── Event Sheet ───────────────────────────────────────────
+function openAddEvt(){
+  editEId=null;
+  document.getElementById('evt-sh-title').textContent='📅 เพิ่มนัดหมาย';
+  document.getElementById('evt-save-btn').textContent='+ บันทึกนัดหมาย';
+  document.getElementById('evt-del-btn').classList.add('hidden');
+  document.getElementById('evt-divider').classList.add('hidden');
+  document.getElementById('evt-togs').classList.add('hidden');
+  document.getElementById('e-title').value='';
+  document.getElementById('e-date').value=today();
+  document.getElementById('e-time').value='';
+  document.getElementById('e-note').value='';
+  document.getElementById('e-price').value='';
+  showOv('ov-evt');
+}
+
+function openEditEvt(id){
+  const ev=window.evts.find(x=>x.id===id);if(!ev)return;
+  editEId=id;
+  document.getElementById('evt-sh-title').textContent='✏️ แก้ไขนัดหมาย';
+  document.getElementById('evt-save-btn').textContent='💾 บันทึกการแก้ไข';
+  document.getElementById('evt-del-btn').classList.remove('hidden');
+  document.getElementById('evt-divider').classList.remove('hidden');
+  document.getElementById('evt-togs').classList.remove('hidden');
+  document.getElementById('e-title').value=ev.title||'';
+  document.getElementById('e-date').value=ev.date||today();
+  document.getElementById('e-time').value=ev.time||'';
+  document.getElementById('e-note').value=ev.note||'';
+  document.getElementById('e-price').value=ev.price||'';
+  refreshEvtTogs(ev);
+  showOv('ov-evt');
+}
+
+function refreshEvtTogs(ev){
+  const db=document.getElementById('evt-done-tog');
+  const pb=document.getElementById('evt-paid-tog');
+  db.style.background=ev.done?'#10b981':'#f0f0eb';db.style.color=ev.done?'#fff':'#444';db.textContent=ev.done?'✅ เสร็จแล้ว':'⬜ ทำเสร็จ?';
+  pb.style.background=ev.paid?'#3b82f6':'#f0f0eb';pb.style.color=ev.paid?'#fff':'#444';pb.textContent=ev.paid?'💰 รับแล้ว':'💳 ได้เงิน?';
+}
+
+function togEvDone(){
+  if(!editEId)return;
+  const i=window.evts.findIndex(e=>e.id===editEId);
+  if(i>=0){window.evts[i]={...window.evts[i],done:!window.evts[i].done};refreshEvtTogs(window.evts[i]);window.scheduleSave&&window.scheduleSave();render();}
+}
+function togEvPaid(){
+  if(!editEId)return;
+  const i=window.evts.findIndex(e=>e.id===editEId);
+  if(i>=0){window.evts[i]={...window.evts[i],paid:!window.evts[i].paid};refreshEvtTogs(window.evts[i]);window.scheduleSave&&window.scheduleSave();render();}
+}
+
+function saveEvt(){
   const title=document.getElementById('e-title').value.trim();
   const date=document.getElementById('e-date').value;
   if(!title||!date)return;
-  window.evts.push({id:Date.now()+'',title,date,
-    time:document.getElementById('e-time').value,
-    note:document.getElementById('e-note').value,
-    price:document.getElementById('e-price').value,
-    done:false,paid:false});
+  if(!Array.isArray(window.evts))window.evts=[];
+  const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value};
+  if(editEId){
+    window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
+  }else{
+    window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
+  }
   window.scheduleSave&&window.scheduleSave();
-  ['e-title','e-note','e-price'].forEach(i=>document.getElementById(i).value='');
   closeOv('ov-evt');render();
 }
 
-function openEdet(id){
-  detId=id;
-  const ev=window.evts.find(e=>e.id===id);if(!ev)return;
-  document.getElementById('edet-title').textContent=ev.title;
-  renderEdet(ev);showOv('ov-edet');
-}
-function renderEdet(ev){
-  const pn=parseFloat(ev.price)||0;
-  document.getElementById('edet-body').innerHTML=`
-    <p style="font-size:13px;color:#999;margin-bottom:16px">${fL(ev.date)}${ev.time?' · '+ev.time+' น.':''}</p>
-    ${ev.photo?`<img src="${ev.photo}" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:14px">`:''}
-    <label class="lbl">หมายเหตุ</label>
-    <textarea class="inp" oninput="updEv('note',this.value)">${esc(ev.note||'')}</textarea>
-    <label class="lbl">มูลค่างาน (฿)</label>
-    <input class="inp" type="number" inputmode="numeric" value="${ev.price||''}" oninput="updEv('price',this.value)" placeholder="0">
-    <div class="togr">
-      <button class="tog" style="background:${ev.done?'#10b981':'#f0f0eb'};color:${ev.done?'#fff':'#444'}" onclick="togDone('${ev.id}')">${ev.done?'✅ เสร็จแล้ว':'⬜ ทำเสร็จ?'}</button>
-      <button class="tog" style="background:${ev.paid?'#3b82f6':'#f0f0eb'};color:${ev.paid?'#fff':'#444'}" onclick="togPaid('${ev.id}')">${ev.paid?'💰 รับแล้ว':'💳 ได้เงิน?'}</button>
-    </div>
-    ${pn>0?`<div class="mbox" style="background:${ev.paid?'#f0fdf4':'#fffbeb'};border-color:${ev.paid?'#86efac':'#fde68a'}">
-      <span style="font-weight:800;color:${ev.paid?'#16a34a':'#b45309'}">${ev.paid?'✅ รับครบแล้ว':'⏳ รอรับเงิน'}</span>
-      <span style="font-size:22px;font-weight:800;color:${ev.paid?'#16a34a':'#b45309'}">${fP(ev.price)}</span>
-    </div>`:''}
-    <button class="btn" style="background:#fff5f5;color:#ef4444;border:2px solid #fecaca" onclick="delEv('${ev.id}')">🗑 ลบนัดหมายนี้</button>
-  `;
-}
-function closeEvDet(e){
-  if(!e||e.target===document.getElementById('ov-edet')){document.getElementById('ov-edet').classList.add('hidden');render();}
-}
-function updEv(k,v){
-  const i=window.evts.findIndex(e=>e.id===detId);
-  if(i>=0){window.evts[i]={...window.evts[i],[k]:v};window.scheduleSave&&window.scheduleSave();}
-}
-function togDone(id){
-  const i=window.evts.findIndex(e=>e.id===id);
-  if(i>=0){window.evts[i]={...window.evts[i],done:!window.evts[i].done};window.scheduleSave&&window.scheduleSave();renderEdet(window.evts[i]);render();}
-}
-function togPaid(id){
-  const i=window.evts.findIndex(e=>e.id===id);
-  if(i>=0){window.evts[i]={...window.evts[i],paid:!window.evts[i].paid};window.scheduleSave&&window.scheduleSave();
-    if(!document.getElementById('ov-edet').classList.contains('hidden'))renderEdet(window.evts[i]);
-    render();}
-}
-function delEv(id){
-  window.evts=window.evts.filter(e=>e.id!==id);
+function delEvtSheet(){
+  if(!editEId)return;
+  window.evts=window.evts.filter(e=>e.id!==editEId);
   window.scheduleSave&&window.scheduleSave();
-  document.getElementById('ov-edet').classList.add('hidden');render();
+  closeOv('ov-evt');render();
 }
+
 render();
+
+// ── Notifications ─────────────────────────────────────────
+async function setupNotifications(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    await Notification.requestPermission();
+  }
+  if(Notification.permission === 'granted'){
+    checkAndNotify();
+  }
+}
+
+function checkAndNotify(){
+  const now = new Date(); now.setHours(0,0,0,0);
+  const todayStr = toISO(now);
+  const tmrw = new Date(now); tmrw.setDate(tmrw.getDate()+1);
+  const tmrwStr = toISO(tmrw);
+  const evts = window.evts || [];
+  const tasks = window.tasks || [];
+
+  // นัดหมายวันนี้
+  evts.filter(e=>!e.done && e.date===todayStr).forEach(ev=>{
+    const key = 'notif_ev_'+ev.id+'_'+todayStr;
+    if(!localStorage.getItem(key)){
+      new Notification('📅 นัดหมายวันนี้', {
+        body: ev.title + (ev.time ? ' เวลา '+ev.time+' น.' : ''),
+        icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
+      });
+      localStorage.setItem(key, '1');
+    }
+  });
+
+  // นัดหมายพรุ่งนี้
+  evts.filter(e=>!e.done && e.date===tmrwStr).forEach(ev=>{
+    const key = 'notif_ev_tmrw_'+ev.id+'_'+todayStr;
+    if(!localStorage.getItem(key)){
+      new Notification('⏰ นัดหมายพรุ่งนี้', {
+        body: ev.title + (ev.time ? ' เวลา '+ev.time+' น.' : ''),
+        icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
+      });
+      localStorage.setItem(key, '1');
+    }
+  });
+
+  // งานใกล้ deadline (อีก 0-2 วัน)
+  tasks.filter(t=>t.endDate).forEach(t=>{
+    const end = new Date(t.endDate+'T00:00:00');
+    const dl = Math.ceil((end-now)/86400000);
+    if(dl >= 0 && dl <= 2){
+      const key = 'notif_task_'+t.id+'_'+todayStr;
+      if(!localStorage.getItem(key)){
+        const msg = dl===0 ? 'ส่งดราฟวันนี้!' : `อีก ${dl} วันต้องส่งดราฟ`;
+        new Notification('🔔 งานใกล้ deadline', {
+          body: t.text + ' — ' + msg,
+          icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
+        });
+        localStorage.setItem(key, '1');
+      }
+    }
+  });
+}
+
+// รันหลังข้อมูลโหลดเสร็จ
+setTimeout(setupNotifications, 2000);
+
 </script>
 </body>
 </html>
