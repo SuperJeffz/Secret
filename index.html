@@ -284,8 +284,33 @@ function render(){
     up.forEach(ev=>{h+=ecard(ev);});
   }else{
     if(dn.length)h+=`<div class="statb">${[['มูลค่ารวม',totA,'#fff'],['ได้รับ',totP,'#10b981'],['รอรับ',totW,totW>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
-    if(!dn.length)h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');
-    dn.forEach(ev=>{h+=ecard(ev);});
+    if(!dn.length){h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');}
+    else{
+      const groups={};
+      dn.forEach(ev=>{
+        const d=new Date(ev.date+'T00:00:00');
+        const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        const lbl=d.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+        if(!groups[key])groups[key]={lbl,evts:[],total:0,paid:0};
+        groups[key].evts.push(ev);
+        groups[key].total+=(parseFloat(ev.price)||0);
+        groups[key].paid+=(ev.paid?(parseFloat(ev.price)||0):0);
+      });
+      Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(k=>{
+        const g=groups[k];
+        const wait=g.total-g.paid;
+        h+=`<div style="margin-bottom:6px;margin-top:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px">
+            <span style="font-size:13px;font-weight:800;color:#555">📆 ${g.lbl}</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              ${g.total>0?`<span style="font-size:11px;font-weight:700;color:#10b981">รับ ${g.paid.toLocaleString('th-TH')} ฿</span>`:''}
+              ${wait>0?`<span style="font-size:11px;font-weight:700;color:#f59e0b">รอ ${wait.toLocaleString('th-TH')} ฿</span>`:''}
+            </div>
+          </div>`;
+        g.evts.forEach(ev=>{h+=ecard(ev);});
+        h+='</div>';
+      });
+    }
   }
   document.getElementById('content').innerHTML=h;
   document.getElementById('fab').style.display=curTab>=4?'none':'';
@@ -515,13 +540,19 @@ function saveEvt(){
   const date=document.getElementById('e-date').value;
   if(!title||!date)return;
   if(!Array.isArray(window.evts))window.evts=[];
-  const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value};
+  const time=document.getElementById('e-time').value;
+  const data={title,date,time,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value};
+  let newId=null;
   if(editEId){
     window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
+    newId=editEId;
   }else{
-    window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
+    newId=Date.now()+'';
+    window.evts.push({id:newId,done:false,paid:false,...data});
   }
   window.scheduleSave&&window.scheduleSave();
+  // ตั้งแจ้งเตือน
+  if(date&&time) scheduleNotif(newId,title,date,time);
   closeOv('ov-evt');render();
 }
 
