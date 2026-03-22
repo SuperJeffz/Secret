@@ -131,6 +131,8 @@ textarea.inp{height:76px;resize:none}
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
+      <label class="lbl">สคริปต์ / บทพูด (ถ้ามี)</label>
+      <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <button class="btn" id="task-save-btn" onclick="saveTask()">+ บันทึกงาน</button>
       <div class="divider hidden" id="task-divider"></div>
       <button class="btn btnr hidden" id="task-del-btn" onclick="delTaskSheet()">🗑 ลบงานนี้</button>
@@ -340,7 +342,10 @@ function tcard(t,bl,bc,ns){
         ${(s||e)?`<div class="drow"><span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}</div>${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}`:''}
       </div>
     </div>
-    <button class="adv" style="background:${bc}" onclick="event.stopPropagation();${advAct}">${bl}</button>
+    <div style="display:flex;gap:8px">
+      ${t.script?`<button style="flex:0 0 auto;padding:14px 16px;border:none;border-radius:13px;background:#f0f4ff;color:#2563eb;font-size:13px;font-weight:800;cursor:pointer" onclick="event.stopPropagation();openScript('${t.id}')">📄 สคริปต์</button>`:''}
+      <button class="adv" style="background:${bc};flex:1" onclick="event.stopPropagation();${advAct}">${bl}</button>
+    </div>
   </div>`;
 }
 
@@ -384,6 +389,7 @@ function openAddTask(){
   document.getElementById('t-start').value=td;
   document.getElementById('t-end').value=plus7(td);
   clearPhoto();setPri('medium');
+  document.getElementById('t-script').value='';
   showOv('ov-task');
 }
 
@@ -401,6 +407,7 @@ function openEditTask(id){
   setPri(t.priority||'medium');
   if(t.photo){photoB64=t.photo;document.getElementById('ph-prev').src=t.photo;document.getElementById('ph-wrap').classList.remove('hidden');}
   else clearPhoto();
+  document.getElementById('t-script').value=t.script||'';
   showOv('ov-task');
 }
 
@@ -563,72 +570,93 @@ function delEvtSheet(){
   closeOv('ov-evt');render();
 }
 
+function openScript(id){
+  const t = window.tasks.find(x=>x.id===id);
+  if(!t||!t.script) return;
+  document.getElementById('script-title').textContent = t.text;
+  document.getElementById('script-body').textContent = t.script;
+  showOv('ov-script');
+}
+
+function copyScript(){
+  const text = document.getElementById('script-body').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.querySelector('#ov-script button');
+    btn.textContent = '✅ คัดลอกแล้ว';
+    setTimeout(()=>{ btn.textContent = '📋 คัดลอก'; }, 2000);
+  });
+}
+
 render();
 
-// ── Notifications ─────────────────────────────────────────
-async function setupNotifications(){
-  if(!('Notification' in window)) return;
-  if(Notification.permission === 'default'){
-    await Notification.requestPermission();
+// ── Service Worker + Notification ────────────────────────
+let swReg = null;
+
+async function initSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    swReg = await navigator.serviceWorker.register('/Secret/sw.js');
+    await navigator.serviceWorker.ready;
+  }catch(e){}
+}
+
+async function getPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission==='granted') return true;
+  if(Notification.permission==='default'){
+    const p = await Notification.requestPermission();
+    return p==='granted';
   }
-  if(Notification.permission === 'granted'){
-    checkAndNotify();
+  return false;
+}
+
+async function scheduleNotif(id, title, date, time){
+  if(!await getPermission()) return;
+  const [h,m] = time.split(':').map(Number);
+  const target = new Date(date+'T00:00:00');
+  target.setHours(h,m,0,0);
+  const ms = target.getTime() - Date.now();
+  if(ms<=0) return;
+
+  const sw = swReg ? (swReg.active || swReg.waiting || swReg.installing) : null;
+  if(sw){
+    sw.postMessage({type:'SCHEDULE', id, title, body:'ถึงเวลานัดหมาย '+time+' น.', ms});
+    const ms30 = ms - 30*60*1000;
+    if(ms30>0) sw.postMessage({type:'SCHEDULE', id:'pre_'+id, title:'⏰ ใกล้ถึงเวลา', body:title+' อีก 30 นาที ('+time+' น.)', ms:ms30});
+  } else {
+    setTimeout(()=>{
+      new Notification('📅 '+title,{body:'ถึงเวลานัดหมาย '+time+' น.',tag:'evt_'+id,requireInteraction:true});
+    }, ms);
+    const ms30 = ms - 30*60*1000;
+    if(ms30>0) setTimeout(()=>{
+      new Notification('⏰ '+title,{body:'อีก 30 นาที ('+time+' น.)',tag:'pre_'+id});
+    }, ms30);
   }
 }
 
-function checkAndNotify(){
-  const now = new Date(); now.setHours(0,0,0,0);
-  const todayStr = toISO(now);
-  const tmrw = new Date(now); tmrw.setDate(tmrw.getDate()+1);
-  const tmrwStr = toISO(tmrw);
-  const evts = window.evts || [];
-  const tasks = window.tasks || [];
-
-  // นัดหมายวันนี้
-  evts.filter(e=>!e.done && e.date===todayStr).forEach(ev=>{
-    const key = 'notif_ev_'+ev.id+'_'+todayStr;
-    if(!localStorage.getItem(key)){
-      new Notification('📅 นัดหมายวันนี้', {
-        body: ev.title + (ev.time ? ' เวลา '+ev.time+' น.' : ''),
-        icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
-      });
-      localStorage.setItem(key, '1');
-    }
-  });
-
-  // นัดหมายพรุ่งนี้
-  evts.filter(e=>!e.done && e.date===tmrwStr).forEach(ev=>{
-    const key = 'notif_ev_tmrw_'+ev.id+'_'+todayStr;
-    if(!localStorage.getItem(key)){
-      new Notification('⏰ นัดหมายพรุ่งนี้', {
-        body: ev.title + (ev.time ? ' เวลา '+ev.time+' น.' : ''),
-        icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
-      });
-      localStorage.setItem(key, '1');
-    }
-  });
-
-  // งานใกล้ deadline (อีก 0-2 วัน)
-  tasks.filter(t=>t.endDate).forEach(t=>{
-    const end = new Date(t.endDate+'T00:00:00');
-    const dl = Math.ceil((end-now)/86400000);
-    if(dl >= 0 && dl <= 2){
-      const key = 'notif_task_'+t.id+'_'+todayStr;
-      if(!localStorage.getItem(key)){
-        const msg = dl===0 ? 'ส่งดราฟวันนี้!' : `อีก ${dl} วันต้องส่งดราฟ`;
-        new Notification('🔔 งานใกล้ deadline', {
-          body: t.text + ' — ' + msg,
-          icon: 'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png'
-        });
-        localStorage.setItem(key, '1');
-      }
-    }
+async function rescheduleAll(){
+  if(!await getPermission()) return;
+  (window.evts||[]).filter(e=>!e.done&&e.time).forEach(ev=>{
+    scheduleNotif(ev.id, ev.title, ev.date, ev.time);
   });
 }
 
-// รันหลังข้อมูลโหลดเสร็จ
-setTimeout(setupNotifications, 2000);
+initSW().then(()=>{ setTimeout(rescheduleAll, 2000); });
 
 </script>
+
+<!-- Script Viewer -->
+<div class="ov hidden" id="ov-script" onclick="closeOv('ov-script',event)">
+  <div class="sh" style="max-height:85dvh">
+    <div class="shh"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+      <div class="sht" style="padding:0" id="script-title">สคริปต์</div>
+      <button onclick="copyScript()" style="background:#f0f0eb;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#555">📋 คัดลอก</button>
+    </div>
+    <div class="shb">
+      <div id="script-body" style="font-size:15px;line-height:1.9;color:#222;white-space:pre-wrap;padding-bottom:20px"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
