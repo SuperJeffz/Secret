@@ -40,7 +40,7 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .drow span{font-size:11px;color:#aaa}
 .drow .dl{font-size:11px;font-weight:800}
 .crow{display:flex;gap:10px;margin-bottom:12px}
-.adv{width:100%;padding:14px;border:none;border-radius:13px;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.adv{padding:14px;border:none;border-radius:13px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;flex:1}
 .cphoto{width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:12px;display:block}
 .empty{display:flex;flex-direction:column;align-items:center;padding:60px 20px;text-align:center}
 .eico{font-size:52px;margin-bottom:12px}
@@ -72,7 +72,7 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
 .slbl{font-size:11px;color:#bbb;margin-bottom:5px;display:block}
 .inp{width:100%;background:#f5f5f0;border:2px solid transparent;border-radius:12px;padding:13px;font-size:15px;color:#111;outline:none;margin-bottom:12px}
 .inp:focus{border-color:#ddd}
-textarea.inp{height:76px;resize:none}
+textarea.inp{resize:none}
 .r2{display:flex;gap:10px}
 .r2>div{flex:1}
 .btn{width:100%;padding:14px;border:none;border-radius:13px;background:#111;color:#fff;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px}
@@ -104,7 +104,7 @@ textarea.inp{height:76px;resize:none}
   <nav id="nav"></nav>
 </div>
 
-<!-- Task Sheet (Add & Edit) -->
+<!-- Task Sheet -->
 <div class="ov hidden" id="ov-task" onclick="closeOv('ov-task',event)">
   <div class="sh">
     <div class="shh"></div>
@@ -125,14 +125,14 @@ textarea.inp{height:76px;resize:none}
         <div><span class="slbl">วันเริ่ม</span><input class="inp" id="t-start" type="date"></div>
         <div><span class="slbl">ส่งดราฟภายใน</span><input class="inp" id="t-end" type="date"></div>
       </div>
+      <label class="lbl">สคริปต์ / บทพูด (ถ้ามี)</label>
+      <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <label class="lbl">รูปภาพ (ถ้ามี)</label>
       <button class="photob" onclick="document.getElementById('fi-task').click()">📷 ถ่าย / เลือกรูป</button>
       <input type="file" id="fi-task" accept="image/*" class="hidden" onchange="onPhoto(this)">
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
-      <label class="lbl">สคริปต์ / บทพูด (ถ้ามี)</label>
-      <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <button class="btn" id="task-save-btn" onclick="saveTask()">+ บันทึกงาน</button>
       <div class="divider hidden" id="task-divider"></div>
       <button class="btn btnr hidden" id="task-del-btn" onclick="delTaskSheet()">🗑 ลบงานนี้</button>
@@ -140,7 +140,21 @@ textarea.inp{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Event Sheet (Add & Edit) -->
+<!-- Script Viewer -->
+<div class="ov hidden" id="ov-script" onclick="closeOv('ov-script',event)">
+  <div class="sh" style="max-height:85dvh">
+    <div class="shh"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+      <div class="sht" style="padding:0" id="script-title">สคริปต์</div>
+      <button onclick="copyScript()" id="copy-btn" style="background:#f0f0eb;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#555">📋 คัดลอก</button>
+    </div>
+    <div class="shb">
+      <div id="script-body" style="font-size:15px;line-height:1.9;color:#222;white-space:pre-wrap;padding-bottom:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Event Sheet -->
 <div class="ov hidden" id="ov-evt" onclick="closeOv('ov-evt',event)">
   <div class="sh">
     <div class="shh"></div>
@@ -213,7 +227,7 @@ window.scheduleSave = function(){
   saveTimer = setTimeout(async()=>{
     try{
       await setDoc(doc(db,'users',UID,'data','main'),
-        {tasks:window.tasks,evts:window.evts,updatedAt:serverTimestamp()},{merge:true});
+        {tasks:window.tasks, evts:window.evts, updatedAt:serverTimestamp()},{merge:true});
       setBadge('synced');
     }catch(e){ setBadge('offline'); }
   }, 800);
@@ -243,8 +257,8 @@ const fP=p=>{const n=parseFloat(p);return(!p||isNaN(n))?'':n.toLocaleString('th-
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function render(){
-  if(!Array.isArray(window.tasks))return;
-  const T=window.tasks,E=window.evts||[];
+  if(!Array.isArray(window.tasks)) return;
+  const T=window.tasks, E=window.evts||[];
   const todos=T.filter(t=>t.stage==='todo');
   const drafts=T.filter(t=>t.stage==='draft');
   const posts=T.filter(t=>t.stage==='post');
@@ -260,7 +274,7 @@ function render(){
     (drafts.length?`<span class="hstat">✏️ ${drafts.length}</span>`:'')+
     (posts.length?`<span class="hstat">📤 ${posts.length}</span>`:'')+
     (totW>0?`<span class="hstat money">💰 ${totW.toLocaleString('th-TH')} ฿</span>`:'');
-  if(window.setBadge)window.setBadge('synced');
+  if(window.setBadge) window.setBadge('synced');
 
   const pipes=[{l:'งาน',n:todos.length,c:'#888',t:0},null,{l:'ดราฟ',n:drafts.length,c:'#f59e0b',t:1},null,{l:'รอโพส',n:posts.length,c:'#60a5fa',t:2},null,{l:'นัดหมาย',n:up.length,c:'#a78bfa',t:3}];
   document.getElementById('pipe-inner').innerHTML=pipes.map(p=>p===null?`<span style="color:#333;font-size:13px">›</span>`:`<button class="pp" style="background:${curTab===p.t?p.c:p.c+'28'};color:${curTab===p.t?'#fff':p.c}" onclick="setTab(${p.t})">${p.l}${p.n?' '+p.n:''}</button>`).join('');
@@ -271,66 +285,68 @@ function render(){
 
   let h='';
   if(curTab===0){
-    if(!todos.length)h=emp('✨','ยังไม่มีงาน','กดปุ่ม ＋ ด้านบน');
-    todos.forEach(t=>{h+=tcard(t,'✅ เสร็จ → ส่งดราฟ','#111','draft');});
-  }else if(curTab===1){
+    if(!todos.length) h=emp('✨','ยังไม่มีงาน','กดปุ่ม ＋ ด้านบน');
+    todos.forEach(t=>{ h+=tcard(t,'✅ เสร็จ → ส่งดราฟ','#111','draft'); });
+  } else if(curTab===1){
     h+=`<div class="ibox" style="background:#fffbeb;border-color:#fde68a"><span style="font-size:20px">✏️</span><p style="font-size:13px;color:#92400e;line-height:1.7">งานที่ส่งดราฟแล้ว รอลูกค้าตรวจสอบ</p></div>`;
-    if(!drafts.length)h+=emp('📨','ยังไม่มีงาน','กด "เสร็จ" ในหน้างานทั้งหมด');
-    drafts.forEach(t=>{h+=tcard(t,'✅ แก้ไขเสร็จ → รอโพส','#d97706','post');});
-  }else if(curTab===2){
+    if(!drafts.length) h+=emp('📨','ยังไม่มีงาน','กด "เสร็จ" ในหน้างานทั้งหมด');
+    drafts.forEach(t=>{ h+=tcard(t,'✅ แก้ไขเสร็จ → รอโพส','#d97706','post'); });
+  } else if(curTab===2){
     h+=`<div class="ibox" style="background:#eff6ff;border-color:#bfdbfe"><span style="font-size:20px">📅</span><p style="font-size:13px;color:#1e40af;line-height:1.7">กด "นัดวันโพส" เพื่อเลือกวัน-เวลา</p></div>`;
-    if(!posts.length)h+=emp('📤','ยังไม่มีงาน','กด "แก้ไขเสร็จ" ในหน้าส่งดราฟ');
-    posts.forEach(t=>{h+=tcard(t,'📅 นัดวันโพส → นัดหมาย','#2563eb','sched');});
-  }else if(curTab===3){
-    if(!up.length)h=emp('📅','ยังไม่มีนัดหมาย','กดปุ่ม ＋ ด้านบน');
-    up.forEach(ev=>{h+=ecard(ev);});
-  }else{
-    if(dn.length)h+=`<div class="statb">${[['มูลค่ารวม',totA,'#fff'],['ได้รับ',totP,'#10b981'],['รอรับ',totW,totW>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
-    if(!dn.length){h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');}
-    else{
+    if(!posts.length) h+=emp('📤','ยังไม่มีงาน','กด "แก้ไขเสร็จ" ในหน้าส่งดราฟ');
+    posts.forEach(t=>{ h+=tcard(t,'📅 นัดวันโพส → นัดหมาย','#2563eb','sched'); });
+  } else if(curTab===3){
+    if(!up.length) h=emp('📅','ยังไม่มีนัดหมาย','กดปุ่ม ＋ ด้านบน');
+    up.forEach(ev=>{ h+=ecard(ev); });
+  } else {
+    if(dn.length){
+      const totA2=dn.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+      const totP2=dn.filter(e=>e.paid).reduce((s,e)=>s+(parseFloat(e.price)||0),0);
+      h+=`<div class="statb">${[['มูลค่ารวม',totA2,'#fff'],['ได้รับ',totP2,'#10b981'],['รอรับ',totA2-totP2,(totA2-totP2)>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
+      // จัดกลุ่มตามเดือน
       const groups={};
       dn.forEach(ev=>{
         const d=new Date(ev.date+'T00:00:00');
         const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
         const lbl=d.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
-        if(!groups[key])groups[key]={lbl,evts:[],total:0,paid:0};
+        if(!groups[key]) groups[key]={lbl,evts:[],total:0,paid:0};
         groups[key].evts.push(ev);
         groups[key].total+=(parseFloat(ev.price)||0);
         groups[key].paid+=(ev.paid?(parseFloat(ev.price)||0):0);
       });
       Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(k=>{
-        const g=groups[k];
-        const wait=g.total-g.paid;
-        h+=`<div style="margin-bottom:6px;margin-top:4px">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px">
-            <span style="font-size:13px;font-weight:800;color:#555">📆 ${g.lbl}</span>
-            <div style="display:flex;gap:8px;align-items:center">
-              ${g.total>0?`<span style="font-size:11px;font-weight:700;color:#10b981">รับ ${g.paid.toLocaleString('th-TH')} ฿</span>`:''}
-              ${wait>0?`<span style="font-size:11px;font-weight:700;color:#f59e0b">รอ ${wait.toLocaleString('th-TH')} ฿</span>`:''}
-            </div>
-          </div>`;
-        g.evts.forEach(ev=>{h+=ecard(ev);});
+        const g=groups[k]; const wait=g.total-g.paid;
+        h+=`<div><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:4px">
+          <span style="font-size:13px;font-weight:800;color:#555">📆 ${g.lbl}</span>
+          <div style="display:flex;gap:8px">
+            ${g.total>0?`<span style="font-size:11px;font-weight:700;color:#10b981">รับ ${g.paid.toLocaleString('th-TH')} ฿</span>`:''}
+            ${wait>0?`<span style="font-size:11px;font-weight:700;color:#f59e0b">รอ ${wait.toLocaleString('th-TH')} ฿</span>`:''}
+          </div></div>`;
+        g.evts.forEach(ev=>{ h+=ecard(ev); });
         h+='</div>';
       });
+    } else {
+      h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');
     }
   }
   document.getElementById('content').innerHTML=h;
   document.getElementById('fab').style.display=curTab>=4?'none':'';
 }
 
-function emp(i,t,s){return`<div class="empty"><div class="eico">${i}</div><div class="etitle">${t}</div><div class="esub">${s}</div></div>`;}
+function emp(i,t,s){ return`<div class="empty"><div class="eico">${i}</div><div class="etitle">${t}</div><div class="esub">${s}</div></div>`; }
 
 function tcard(t,bl,bc,ns){
-  const now=new Date();now.setHours(0,0,0,0);
+  const now=new Date(); now.setHours(0,0,0,0);
   const e=t.endDate?new Date(t.endDate+'T00:00:00'):null;
   const s=t.startDate?new Date(t.startDate+'T00:00:00'):null;
   const dl=e?Math.ceil((e-now)/86400000):null;
   const ov=dl!==null&&dl<0;
   const dc=ov?'#ef4444':dl<=2?'#f59e0b':'#10b981';
   let pr=0;
-  if(s&&e&&e>s)pr=Math.round(Math.min(Math.max((now-s)/(e-s),0),1)*100);
+  if(s&&e&&e>s) pr=Math.round(Math.min(Math.max((now-s)/(e-s),0),1)*100);
   const advAct=ns==='sched'?`openSched('${t.id}')`:`adv('${t.id}','${ns}')`;
-  return`<div class="card" onclick="openEditTask('${t.id}')">
+  const hasScript=t.script&&t.script.trim().length>0;
+  return `<div class="card" onclick="openEditTask('${t.id}')">
     ${t.photo?`<img class="cphoto" src="${t.photo}">`:''}
     <div class="crow">
       <div style="flex:1">
@@ -338,13 +354,14 @@ function tcard(t,bl,bc,ns){
         <div class="tags">
           <span class="tag" style="background:${PC[t.priority]||'#ccc'}22;color:${PC[t.priority]||'#888'}">${PL[t.priority]||''}</span>
           ${fP(t.price)?`<span class="tag" style="background:#f0f0eb;color:#555">💼 ${fP(t.price)}</span>`:''}
+          ${hasScript?`<span class="tag" style="background:#eff6ff;color:#2563eb">📄 มีสคริปต์</span>`:''}
         </div>
-        ${(s||e)?`<div class="drow"><span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>${dl!==null?`<span class="dl" style="color:${dc}">${ov?`เกิน ${Math.abs(dl)} วัน`:dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}</div>${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}`:''}
+        ${(s||e)?`<div class="drow"><span>${s?fS(t.startDate):''} ${s&&e?'→':''} ${e?fS(t.endDate):''}</span>${dl!==null?`<span class="dl" style="color:${dc}">${ov?'เกิน '+Math.abs(dl)+' วัน':dl===0?'วันนี้!':'อีก '+dl+' วัน'}</span>`:''}</div>${s&&e?`<div class="prog"><div class="progf" style="width:${pr}%;background:${ov?'#ef4444':dl<=2?'#f59e0b':'#111'}"></div></div>`:''}`:''}
       </div>
     </div>
     <div style="display:flex;gap:8px">
-      ${t.script?`<button style="flex:0 0 auto;padding:14px 16px;border:none;border-radius:13px;background:#f0f4ff;color:#2563eb;font-size:13px;font-weight:800;cursor:pointer" onclick="event.stopPropagation();openScript('${t.id}')">📄 สคริปต์</button>`:''}
-      <button class="adv" style="background:${bc};flex:1" onclick="event.stopPropagation();${advAct}">${bl}</button>
+      ${hasScript?`<button style="padding:14px 16px;border:none;border-radius:13px;background:#eff6ff;color:#2563eb;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();openScript('${t.id}')">📄 สคริปต์</button>`:''}
+      <button class="adv" style="background:${bc}" onclick="event.stopPropagation();${advAct}">${bl}</button>
     </div>
   </div>`;
 }
@@ -352,7 +369,7 @@ function tcard(t,bl,bc,ns){
 function ecard(ev){
   const it=new Date().toDateString()===new Date(ev.date+'T00:00:00').toDateString();
   const d=new Date(ev.date+'T00:00:00');
-  return`<div class="evc ${it?'today':''}" onclick="openEditEvt('${ev.id}')">
+  return `<div class="evc ${it?'today':''}" onclick="openEditEvt('${ev.id}')">
     <div class="dayb" style="background:${it?'#8b5cf6':'#111'}">
       <div class="dayn">${d.getDate()}</div>
       <div class="daym" style="color:${it?'#e9d5ff':'#aaa'}">${d.toLocaleDateString('th-TH',{month:'short'})}</div>
@@ -370,11 +387,11 @@ function ecard(ev){
   </div>`;
 }
 
-function setTab(t){curTab=t;render();}
-function onFab(){curTab===3?openAddEvt():openAddTask();}
-function showOv(id){document.getElementById(id).classList.remove('hidden');}
-function closeOv(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.add('hidden');}
-function closeDov(id,e){if(!e||e.target===document.getElementById(id))document.getElementById(id).classList.add('hidden');}
+function setTab(t){ curTab=t; render(); }
+function onFab(){ curTab===3 ? openAddEvt() : openAddTask(); }
+function showOv(id){ document.getElementById(id).classList.remove('hidden'); }
+function closeOv(id,e){ if(!e||e.target===document.getElementById(id)) document.getElementById(id).classList.add('hidden'); }
+function closeDov(id,e){ if(!e||e.target===document.getElementById(id)) document.getElementById(id).classList.add('hidden'); }
 
 // ── Task Sheet ────────────────────────────────────────────
 function openAddTask(){
@@ -385,16 +402,16 @@ function openAddTask(){
   document.getElementById('task-divider').classList.add('hidden');
   document.getElementById('t-text').value='';
   document.getElementById('t-price').value='';
+  document.getElementById('t-script').value='';
   const td=today();
   document.getElementById('t-start').value=td;
   document.getElementById('t-end').value=plus7(td);
-  clearPhoto();setPri('medium');
-  document.getElementById('t-script').value='';
+  clearPhoto(); setPri('medium');
   showOv('ov-task');
 }
 
 function openEditTask(id){
-  const t=window.tasks.find(x=>x.id===id);if(!t)return;
+  const t=window.tasks.find(x=>x.id===id); if(!t) return;
   editTId=id;
   document.getElementById('task-sh-title').textContent='✏️ แก้ไขงาน';
   document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
@@ -402,31 +419,31 @@ function openEditTask(id){
   document.getElementById('task-divider').classList.remove('hidden');
   document.getElementById('t-text').value=t.text||'';
   document.getElementById('t-price').value=t.price||'';
+  document.getElementById('t-script').value=t.script||'';
   document.getElementById('t-start').value=t.startDate||today();
   document.getElementById('t-end').value=t.endDate||plus7(today());
   setPri(t.priority||'medium');
-  if(t.photo){photoB64=t.photo;document.getElementById('ph-prev').src=t.photo;document.getElementById('ph-wrap').classList.remove('hidden');}
+  if(t.photo){ photoB64=t.photo; document.getElementById('ph-prev').src=t.photo; document.getElementById('ph-wrap').classList.remove('hidden'); }
   else clearPhoto();
-  document.getElementById('t-script').value=t.script||'';
   showOv('ov-task');
 }
 
-document.getElementById('t-start').addEventListener('change',function(){document.getElementById('t-end').value=plus7(this.value);});
+document.getElementById('t-start').addEventListener('change',function(){ document.getElementById('t-end').value=plus7(this.value); });
 
 function setPri(p){
   selPri=p;
-  document.querySelectorAll('.pribtn').forEach(b=>{const a=b.dataset.p===p;b.style.background=a?'#111':'#f0f0eb';b.style.color=a?'#fff':'#555';});
+  document.querySelectorAll('.pribtn').forEach(b=>{ const a=b.dataset.p===p; b.style.background=a?'#111':'#f0f0eb'; b.style.color=a?'#fff':'#555'; });
 }
 
 function onPhoto(input){
-  const f=input.files[0];if(!f)return;
+  const f=input.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=e=>{
     const img=new Image();
     img.onload=()=>{
-      const mx=800;let w=img.width,h=img.height;
-      if(w>mx||h>mx){if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;}}
-      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      const mx=800; let w=img.width,h=img.height;
+      if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
       photoB64=cv.toDataURL('image/jpeg',0.65);
       document.getElementById('ph-prev').src=photoB64;
@@ -434,38 +451,59 @@ function onPhoto(input){
     };
     img.src=e.target.result;
   };
-  r.readAsDataURL(f);input.value='';
+  r.readAsDataURL(f); input.value='';
 }
-function clearPhoto(){photoB64=null;document.getElementById('ph-wrap').classList.add('hidden');document.getElementById('ph-prev').src='';}
+function clearPhoto(){ photoB64=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
 
 function saveTask(){
   const text=document.getElementById('t-text').value.trim();
-  if(!text){alert('กรุณาใส่ชื่องาน');return;}
-  if(!Array.isArray(window.tasks))window.tasks=[];
-  const data={text,priority:selPri||'medium',
-    startDate:document.getElementById('t-start').value||today(),
-    endDate:document.getElementById('t-end').value||plus7(today()),
-    price:document.getElementById('t-price').value||'',
-    photo:photoB64||null};
+  if(!text){ alert('กรุณาใส่ชื่องาน'); return; }
+  if(!Array.isArray(window.tasks)) window.tasks=[];
+  const data={
+    text,
+    priority: selPri||'medium',
+    startDate: document.getElementById('t-start').value||today(),
+    endDate: document.getElementById('t-end').value||plus7(today()),
+    price: document.getElementById('t-price').value||'',
+    script: document.getElementById('t-script').value||'',
+    photo: photoB64||null
+  };
   if(editTId){
     window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
-  }else{
-    window.tasks.push({id:Date.now()+'',stage:'todo',...data});
+  } else {
+    window.tasks.push({id:Date.now()+'', stage:'todo', ...data});
   }
   window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-task');render();
+  closeOv('ov-task'); render();
 }
 
 function delTaskSheet(){
-  if(!editTId)return;
+  if(!editTId) return;
   window.tasks=window.tasks.filter(t=>t.id!==editTId);
   window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-task');render();
+  closeOv('ov-task'); render();
 }
 
 function adv(id,stage){
   window.tasks=window.tasks.map(t=>t.id===id?{...t,stage}:t);
-  window.scheduleSave&&window.scheduleSave();render();
+  window.scheduleSave&&window.scheduleSave(); render();
+}
+
+// ── Script Viewer ─────────────────────────────────────────
+function openScript(id){
+  const t=window.tasks.find(x=>x.id===id);
+  if(!t||!t.script) return;
+  document.getElementById('script-title').textContent=t.text;
+  document.getElementById('script-body').textContent=t.script;
+  document.getElementById('copy-btn').textContent='📋 คัดลอก';
+  showOv('ov-script');
+}
+function copyScript(){
+  const text=document.getElementById('script-body').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    document.getElementById('copy-btn').textContent='✅ คัดลอกแล้ว';
+    setTimeout(()=>{ document.getElementById('copy-btn').textContent='📋 คัดลอก'; },2000);
+  });
 }
 
 // ── Schedule ──────────────────────────────────────────────
@@ -478,17 +516,17 @@ function openSched(id){
   showOv('dov-sched');
 }
 function confirmSched(){
-  const d=document.getElementById('sched-d').value;if(!d)return;
+  const d=document.getElementById('sched-d').value; if(!d) return;
   const t=window.tasks.find(x=>x.id===schedId);
   if(t){
-    if(!Array.isArray(window.evts))window.evts=[];
+    if(!Array.isArray(window.evts)) window.evts=[];
     window.evts.push({id:Date.now()+'',title:t.text,date:d,
       time:document.getElementById('sched-t').value,
       note:'📤 โพสงาน',price:t.price||'',done:false,paid:false});
     window.tasks=window.tasks.filter(x=>x.id!==schedId);
     window.scheduleSave&&window.scheduleSave();
   }
-  closeDov('dov-sched');curTab=3;render();
+  closeDov('dov-sched'); curTab=3; render();
 }
 
 // ── Event Sheet ───────────────────────────────────────────
@@ -508,7 +546,7 @@ function openAddEvt(){
 }
 
 function openEditEvt(id){
-  const ev=window.evts.find(x=>x.id===id);if(!ev)return;
+  const ev=window.evts.find(x=>x.id===id); if(!ev) return;
   editEId=id;
   document.getElementById('evt-sh-title').textContent='✏️ แก้ไขนัดหมาย';
   document.getElementById('evt-save-btn').textContent='💾 บันทึกการแก้ไข';
@@ -527,210 +565,94 @@ function openEditEvt(id){
 function refreshEvtTogs(ev){
   const db=document.getElementById('evt-done-tog');
   const pb=document.getElementById('evt-paid-tog');
-  db.style.background=ev.done?'#10b981':'#f0f0eb';db.style.color=ev.done?'#fff':'#444';db.textContent=ev.done?'✅ เสร็จแล้ว':'⬜ ทำเสร็จ?';
-  pb.style.background=ev.paid?'#3b82f6':'#f0f0eb';pb.style.color=ev.paid?'#fff':'#444';pb.textContent=ev.paid?'💰 รับแล้ว':'💳 ได้เงิน?';
+  db.style.background=ev.done?'#10b981':'#f0f0eb'; db.style.color=ev.done?'#fff':'#444'; db.textContent=ev.done?'✅ เสร็จแล้ว':'⬜ ทำเสร็จ?';
+  pb.style.background=ev.paid?'#3b82f6':'#f0f0eb'; pb.style.color=ev.paid?'#fff':'#444'; pb.textContent=ev.paid?'💰 รับแล้ว':'💳 ได้เงิน?';
 }
 
 function togEvDone(){
-  if(!editEId)return;
+  if(!editEId) return;
   const i=window.evts.findIndex(e=>e.id===editEId);
-  if(i>=0){window.evts[i]={...window.evts[i],done:!window.evts[i].done};refreshEvtTogs(window.evts[i]);window.scheduleSave&&window.scheduleSave();render();}
+  if(i>=0){ window.evts[i]={...window.evts[i],done:!window.evts[i].done}; refreshEvtTogs(window.evts[i]); window.scheduleSave&&window.scheduleSave(); render(); }
 }
 function togEvPaid(){
-  if(!editEId)return;
+  if(!editEId) return;
   const i=window.evts.findIndex(e=>e.id===editEId);
-  if(i>=0){window.evts[i]={...window.evts[i],paid:!window.evts[i].paid};refreshEvtTogs(window.evts[i]);window.scheduleSave&&window.scheduleSave();render();}
+  if(i>=0){ window.evts[i]={...window.evts[i],paid:!window.evts[i].paid}; refreshEvtTogs(window.evts[i]); window.scheduleSave&&window.scheduleSave(); render(); }
 }
 
 function saveEvt(){
   const title=document.getElementById('e-title').value.trim();
   const date=document.getElementById('e-date').value;
-  if(!title||!date)return;
-  if(!Array.isArray(window.evts))window.evts=[];
-  const time=document.getElementById('e-time').value;
-  const data={title,date,time,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value};
-  let newId=null;
+  if(!title||!date) return;
+  if(!Array.isArray(window.evts)) window.evts=[];
+  const data={title,date,
+    time:document.getElementById('e-time').value,
+    note:document.getElementById('e-note').value,
+    price:document.getElementById('e-price').value};
   if(editEId){
     window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
-    newId=editEId;
-  }else{
-    newId=Date.now()+'';
-    window.evts.push({id:newId,done:false,paid:false,...data});
+  } else {
+    window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
   }
   window.scheduleSave&&window.scheduleSave();
-  // ตั้งแจ้งเตือน
-  if(date&&time) scheduleNotif(newId,title,date,time);
-  closeOv('ov-evt');render();
-  // เสนอ Add to Calendar
-  if(date) promptAddToCalendar(newId);
-}
-
-function promptAddToCalendar(id){
-  const ev = window.evts.find(e=>e.id===id);
-  if(!ev) return;
-  // สร้าง Google Calendar URL
-  const dt = ev.date.replace(/-/g,'');
-  let start, end;
-  if(ev.time){
-    const [h,m] = ev.time.split(':');
-    const hEnd = String((parseInt(h)+1)%24).padStart(2,'0');
-    start = dt+'T'+h+m+'00';
-    end   = dt+'T'+hEnd+m+'00';
-  } else {
-    start = dt; end = dt;
-  }
-  const title = encodeURIComponent(ev.title);
-  const details = encodeURIComponent(ev.note||'');
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`;
-
-  // แสดง dialog ถาม
-  const d = document.createElement('div');
-  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px';
-  d.innerHTML=`<div style="background:#fff;border-radius:22px;padding:24px;width:100%;max-width:340px">
-    <div style="font-size:18px;font-weight:800;margin-bottom:8px">📅 เพิ่มในปฏิทิน?</div>
-    <div style="background:#f5f5f0;border-radius:12px;padding:12px;margin-bottom:18px;font-size:14px;line-height:1.6">
-      <b>${ev.title}</b><br>
-      ${ev.date}${ev.time?' เวลา '+ev.time+' น.':''}
-    </div>
-    <div style="display:flex;gap:10px">
-      <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:14px;border:none;border-radius:13px;background:#f0f0eb;color:#555;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">ข้าม</button>
-      <button onclick="window.open('${url}','_blank');this.closest('div[style]').remove()" style="flex:2;padding:14px;border:none;border-radius:13px;background:#111;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">📅 เพิ่มในปฏิทิน</button>
-    </div>
-  </div>`;
-  document.body.appendChild(d);
-  d.addEventListener('click', e=>{ if(e.target===d) d.remove(); });
+  closeOv('ov-evt'); render();
 }
 
 function delEvtSheet(){
-  if(!editEId)return;
+  if(!editEId) return;
   window.evts=window.evts.filter(e=>e.id!==editEId);
   window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-evt');render();
+  closeOv('ov-evt'); render();
 }
 
-function openScript(id){
-  const t = window.tasks.find(x=>x.id===id);
-  if(!t||!t.script) return;
-  document.getElementById('script-title').textContent = t.text;
-  document.getElementById('script-body').textContent = t.script;
-  showOv('ov-script');
-}
-
-function copyScript(){
-  const text = document.getElementById('script-body').textContent;
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn = document.querySelector('#ov-script button');
-    btn.textContent = '✅ คัดลอกแล้ว';
-    setTimeout(()=>{ btn.textContent = '📋 คัดลอก'; }, 2000);
-  });
-}
-
-render();
-
-// ── Notifications ────────────────────────────────────────
+// ── Notifications ─────────────────────────────────────────
 async function reqPermission(){
   if(!('Notification' in window)) return false;
   if(Notification.permission==='granted') return true;
-  if(Notification.permission==='default'){
-    return (await Notification.requestPermission())==='granted';
-  }
+  if(Notification.permission==='default') return (await Notification.requestPermission())==='granted';
   return false;
 }
 
-function notify(title, body, tag){
+function notify(title,body,tag){
   if(Notification.permission==='granted'){
-    new Notification(title, {
-      body, tag,
-      icon:'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png',
-      requireInteraction: true
-    });
+    new Notification(title,{body,tag,icon:'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png',requireInteraction:true});
   }
 }
 
-// แจ้งเตือนตรงเวลา (ใช้งานได้เฉพาะตอนเปิดแอพอยู่)
-function scheduleNotif(id, title, date, time){
+function scheduleNotif(id,title,date,time){
   if(!time) return;
-  const [h,m] = time.split(':').map(Number);
-  const target = new Date(date+'T00:00:00');
-  target.setHours(h,m,0,0);
-  const ms = target.getTime() - Date.now();
+  const [h,m]=time.split(':').map(Number);
+  const target=new Date(date+'T00:00:00'); target.setHours(h,m,0,0);
+  const ms=target.getTime()-Date.now();
   if(ms<=0) return;
-  // ล้าง timer เดิม
-  const old = window._notifTimers && window._notifTimers[id];
-  if(old) clearTimeout(old);
-  if(!window._notifTimers) window._notifTimers={};
-  // แจ้งตรงเวลา
-  window._notifTimers[id] = setTimeout(()=>{
-    notify('📅 '+title, 'ถึงเวลานัดหมาย '+time+' น.', 'evt_'+id);
-  }, ms);
-  // แจ้งล่วงหน้า 30 นาที
-  const ms30 = ms - 30*60*1000;
-  if(ms30>0){
-    window._notifTimers['pre_'+id] = setTimeout(()=>{
-      notify('⏰ ใกล้ถึงเวลา', title+' — อีก 30 นาที ('+time+' น.)', 'pre_'+id);
-    }, ms30);
-  }
+  if(!window._nt) window._nt={};
+  if(window._nt[id]) clearTimeout(window._nt[id]);
+  window._nt[id]=setTimeout(()=>{ notify('📅 '+title,'ถึงเวลานัดหมาย '+time+' น.','evt_'+id); },ms);
+  const ms30=ms-30*60*1000;
+  if(ms30>0){ window._nt['pre_'+id]=setTimeout(()=>{ notify('⏰ ใกล้ถึงเวลา',title+' อีก 30 นาที','pre_'+id); },ms30); }
 }
 
-// เปิดแอพ → เช็คนัดหมายวันนี้/พรุ่งนี้ทันที
 function checkTodayNotifs(){
-  const now = new Date(); now.setHours(0,0,0,0);
-  const todayStr = toISO(now);
-  const tmrw = new Date(now); tmrw.setDate(tmrw.getDate()+1);
-  const tmrwStr = toISO(tmrw);
-  const evts = window.evts||[];
-
-  evts.filter(e=>!e.done && e.date===todayStr).forEach(ev=>{
-    const key='notif_today_'+ev.id+'_'+todayStr;
-    if(!localStorage.getItem(key)){
-      notify('📅 นัดหมายวันนี้', ev.title+(ev.time?' เวลา '+ev.time+' น.':''), 'today_'+ev.id);
-      localStorage.setItem(key,'1');
+  const now=new Date(); now.setHours(0,0,0,0);
+  const td=toISO(now);
+  const tmrw=new Date(now); tmrw.setDate(tmrw.getDate()+1); const tm=toISO(tmrw);
+  (window.evts||[]).filter(e=>!e.done).forEach(ev=>{
+    if(ev.date===td){
+      const key='nt_'+ev.id+'_'+td;
+      if(!localStorage.getItem(key)){ notify('📅 นัดหมายวันนี้',ev.title+(ev.time?' เวลา '+ev.time+' น.':''),'t_'+ev.id); localStorage.setItem(key,'1'); }
+      if(ev.time) scheduleNotif(ev.id,ev.title,ev.date,ev.time);
     }
-    // ตั้ง timer ตรงเวลาด้วย
-    if(ev.time) scheduleNotif(ev.id, ev.title, ev.date, ev.time);
-  });
-
-  evts.filter(e=>!e.done && e.date===tmrwStr).forEach(ev=>{
-    const key='notif_tmrw_'+ev.id+'_'+todayStr;
-    if(!localStorage.getItem(key)){
-      notify('⏰ นัดหมายพรุ่งนี้', ev.title+(ev.time?' เวลา '+ev.time+' น.':''), 'tmrw_'+ev.id);
-      localStorage.setItem(key,'1');
-    }
-    if(ev.time) scheduleNotif(ev.id, ev.title, ev.date, ev.time);
-  });
-
-  // งานใกล้ deadline
-  (window.tasks||[]).filter(t=>t.endDate).forEach(t=>{
-    const dl = Math.ceil((new Date(t.endDate+'T00:00:00')-now)/86400000);
-    if(dl>=0&&dl<=1){
-      const key='notif_dl_'+t.id+'_'+todayStr;
-      if(!localStorage.getItem(key)){
-        notify('🔔 งานใกล้ deadline', t.text+' — '+(dl===0?'ส่งดราฟวันนี้!':'พรุ่งนี้ต้องส่งดราฟ'), 'dl_'+t.id);
-        localStorage.setItem(key,'1');
-      }
+    if(ev.date===tm){
+      const key='ntm_'+ev.id+'_'+td;
+      if(!localStorage.getItem(key)){ notify('⏰ นัดหมายพรุ่งนี้',ev.title+(ev.time?' เวลา '+ev.time+' น.':''),'tm_'+ev.id); localStorage.setItem(key,'1'); }
+      if(ev.time) scheduleNotif(ev.id,ev.title,ev.date,ev.time);
     }
   });
 }
 
-// รัน
-setTimeout(async()=>{
-  if(await reqPermission()) checkTodayNotifs();
-}, 1500);
+setTimeout(async()=>{ if(await reqPermission()) checkTodayNotifs(); },1500);
 
+render();
 </script>
-
-<!-- Script Viewer -->
-<div class="ov hidden" id="ov-script" onclick="closeOv('ov-script',event)">
-  <div class="sh" style="max-height:85dvh">
-    <div class="shh"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
-      <div class="sht" style="padding:0" id="script-title">สคริปต์</div>
-      <button onclick="copyScript()" style="background:#f0f0eb;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#555">📋 คัดลอก</button>
-    </div>
-    <div class="shb">
-      <div id="script-body" style="font-size:15px;line-height:1.9;color:#222;white-space:pre-wrap;padding-bottom:20px"></div>
-    </div>
-  </div>
-</div>
 </body>
 </html>
