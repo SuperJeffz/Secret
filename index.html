@@ -174,6 +174,14 @@ textarea.inp{resize:none}
         <button class="tog" id="evt-done-tog" onclick="togEvDone()">⬜ ทำเสร็จ?</button>
         <button class="tog" id="evt-paid-tog" onclick="togEvPaid()">💳 ได้เงิน?</button>
       </div>
+      <div id="slip-section" class="hidden">
+        <label class="lbl">รูปสลิปการโอนเงิน (ถ้ามี)</label>
+        <button class="photob" onclick="document.getElementById('fi-slip').click()">📎 แนบสลิป</button>
+        <input type="file" id="fi-slip" accept="image/*" class="hidden" onchange="onSlipPhoto(this)">
+        <div id="slip-wrap" class="hidden">
+          <div class="phwrap"><img id="slip-prev" class="phprev"><button class="phdel" onclick="clearSlip()">✕</button></div>
+        </div>
+      </div>
       <button class="btn" id="evt-save-btn" onclick="saveEvt()">+ บันทึกนัดหมาย</button>
       <div class="divider hidden" id="evt-divider"></div>
       <button class="btn btnr hidden" id="evt-del-btn" onclick="delEvtSheet()">🗑 ลบนัดหมายนี้</button>
@@ -245,7 +253,7 @@ window.setBadge = setBadge;
 <script>
 const PC={high:'#ef4444',medium:'#f59e0b',low:'#10b981'};
 const PL={high:'🔴 ด่วน',medium:'🟡 ปกติ',low:'🟢 ไม่เร่ง'};
-let curTab=0, selPri='medium', schedId=null, editTId=null, editEId=null, photoB64=null;
+let curTab=0, selPri='medium', schedId=null, editTId=null, editEId=null, photoB64=null, slipB64=null;
 
 const pad=n=>String(n).padStart(2,'0');
 const toISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -382,9 +390,22 @@ function ecard(ev){
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       ${ev.done?`<span class="tag" style="background:#dcfce7;color:#16a34a">✅</span>`:''}
       ${ev.paid?`<span class="tag" style="background:#dbeafe;color:#1d4ed8">💰</span>`:''}
+      ${ev.slip?`<span class="tag" style="background:#f0fdf4;color:#16a34a">🧾</span>`:''}
       <span style="color:#ddd;font-size:22px">›</span>
     </div>
+  </div>
+  ${ev.slip&&ev.done?`<img src="${ev.slip}" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-top:10px;display:block;background:#f5f5f0;cursor:pointer" onclick="event.stopPropagation();viewSlip('${ev.id}')">`:''}
   </div>`;
+}
+
+function viewSlip(id){
+  const ev=window.evts.find(e=>e.id===id);
+  if(!ev||!ev.slip) return;
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  d.innerHTML=`<img src="${ev.slip}" style="max-width:100%;max-height:90dvh;object-fit:contain;border-radius:12px">`;
+  d.onclick=()=>d.remove();
+  document.body.appendChild(d);
 }
 
 function setTab(t){ curTab=t; render(); }
@@ -454,6 +475,26 @@ function onPhoto(input){
   r.readAsDataURL(f); input.value='';
 }
 function clearPhoto(){ photoB64=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
+
+function onSlipPhoto(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const mx=1000; let w=img.width,h=img.height;
+      if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      slipB64=cv.toDataURL('image/jpeg',0.8);
+      document.getElementById('slip-prev').src=slipB64;
+      document.getElementById('slip-wrap').classList.remove('hidden');
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(f); input.value='';
+}
+function clearSlip(){ slipB64=null; document.getElementById('slip-wrap').classList.add('hidden'); document.getElementById('slip-prev').src=''; }
 
 function saveTask(){
   const text=document.getElementById('t-text').value.trim();
@@ -537,6 +578,8 @@ function openAddEvt(){
   document.getElementById('evt-del-btn').classList.add('hidden');
   document.getElementById('evt-divider').classList.add('hidden');
   document.getElementById('evt-togs').classList.add('hidden');
+  document.getElementById('slip-section').classList.add('hidden');
+  clearSlip();
   document.getElementById('e-title').value='';
   document.getElementById('e-date').value=today();
   document.getElementById('e-time').value='';
@@ -553,6 +596,10 @@ function openEditEvt(id){
   document.getElementById('evt-del-btn').classList.remove('hidden');
   document.getElementById('evt-divider').classList.remove('hidden');
   document.getElementById('evt-togs').classList.remove('hidden');
+  document.getElementById('slip-section').classList.remove('hidden');
+  // โหลดรูปสลิปเดิม
+  if(ev.slip){ slipB64=ev.slip; document.getElementById('slip-prev').src=ev.slip; document.getElementById('slip-wrap').classList.remove('hidden'); }
+  else clearSlip();
   document.getElementById('e-title').value=ev.title||'';
   document.getElementById('e-date').value=ev.date||today();
   document.getElementById('e-time').value=ev.time||'';
@@ -588,7 +635,8 @@ function saveEvt(){
   const data={title,date,
     time:document.getElementById('e-time').value,
     note:document.getElementById('e-note').value,
-    price:document.getElementById('e-price').value};
+    price:document.getElementById('e-price').value,
+    slip:slipB64||null};
   if(editEId){
     window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
   } else {
