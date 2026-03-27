@@ -520,9 +520,12 @@ function saveTask(){
 
 function delTaskSheet(){
   if(!editTId) return;
-  window.tasks=window.tasks.filter(t=>t.id!==editTId);
-  window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-task'); render();
+  const t=window.tasks.find(x=>x.id===editTId);
+  showConfirm('🗑 ลบงานนี้?', t?.text||'', ()=>{
+    window.tasks=window.tasks.filter(t=>t.id!==editTId);
+    window.scheduleSave&&window.scheduleSave();
+    closeOv('ov-task'); render();
+  });
 }
 
 function adv(id,stage){
@@ -648,9 +651,12 @@ function saveEvt(){
 
 function delEvtSheet(){
   if(!editEId) return;
-  window.evts=window.evts.filter(e=>e.id!==editEId);
-  window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-evt'); render();
+  const ev=window.evts.find(x=>x.id===editEId);
+  showConfirm('🗑 ลบนัดหมายนี้?', ev?.title||'', ()=>{
+    window.evts=window.evts.filter(e=>e.id!==editEId);
+    window.scheduleSave&&window.scheduleSave();
+    closeOv('ov-evt'); render();
+  });
 }
 
 // ── Notifications ─────────────────────────────────────────
@@ -699,6 +705,23 @@ function checkTodayNotifs(){
 }
 
 setTimeout(async()=>{ if(await reqPermission()) checkTodayNotifs(); },1500);
+
+function showConfirm(title, name, onConfirm){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px';
+  d.innerHTML=`<div style="background:#fff;border-radius:22px;padding:24px;width:100%;max-width:340px">
+    <div style="font-size:18px;font-weight:800;margin-bottom:8px">${title}</div>
+    <div style="background:#fff5f5;border:2px solid #fecaca;border-radius:12px;padding:12px;margin-bottom:18px;font-size:14px;color:#b91c1c;line-height:1.6">${name}</div>
+    <div style="display:flex;gap:10px">
+      <button id="conf-cancel" style="flex:1;padding:14px;border:none;border-radius:13px;background:#f0f0eb;color:#555;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">ยกเลิก</button>
+      <button id="conf-ok" style="flex:2;padding:14px;border:none;border-radius:13px;background:#ef4444;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">🗑 ลบเลย</button>
+    </div>
+  </div>`;
+  document.body.appendChild(d);
+  d.querySelector('#conf-cancel').onclick=()=>d.remove();
+  d.querySelector('#conf-ok').onclick=()=>{ d.remove(); onConfirm(); };
+  d.onclick=e=>{ if(e.target===d) d.remove(); };
+}
 
 render();
 </script>
