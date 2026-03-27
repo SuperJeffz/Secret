@@ -311,28 +311,55 @@ function render(){
       const totA2=dn.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
       const totP2=dn.filter(e=>e.paid).reduce((s,e)=>s+(parseFloat(e.price)||0),0);
       h+=`<div class="statb">${[['มูลค่ารวม',totA2,'#fff'],['ได้รับ',totP2,'#10b981'],['รอรับ',totA2-totP2,(totA2-totP2)>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
-      // จัดกลุ่มตามเดือน
-      const groups={};
-      dn.forEach(ev=>{
-        const d=new Date(ev.date+'T00:00:00');
-        const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-        const lbl=d.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
-        if(!groups[key]) groups[key]={lbl,evts:[],total:0,paid:0};
-        groups[key].evts.push(ev);
-        groups[key].total+=(parseFloat(ev.price)||0);
-        groups[key].paid+=(ev.paid?(parseFloat(ev.price)||0):0);
-      });
-      Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(k=>{
-        const g=groups[k]; const wait=g.total-g.paid;
-        h+=`<div><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:4px">
-          <span style="font-size:13px;font-weight:800;color:#555">📆 ${g.lbl}</span>
-          <div style="display:flex;gap:8px">
-            ${g.total>0?`<span style="font-size:11px;font-weight:700;color:#10b981">รับ ${g.paid.toLocaleString('th-TH')} ฿</span>`:''}
-            ${wait>0?`<span style="font-size:11px;font-weight:700;color:#f59e0b">รอ ${wait.toLocaleString('th-TH')} ฿</span>`:''}
-          </div></div>`;
-        g.evts.forEach(ev=>{ h+=ecard(ev); });
-        h+='</div>';
-      });
+
+      // Filter tabs: all / paid / unpaid / by month
+      const dnFilter = window._dnFilter||'unpaid';
+      const months = [...new Set(dn.filter(e=>e.paid).map(e=>e.date.slice(0,7)))].sort((a,b)=>b.localeCompare(a));
+
+      // Filter buttons
+      h+=`<div style="overflow-x:auto;scrollbar-width:none;margin-bottom:12px"><div style="display:flex;gap:6px;white-space:nowrap;padding-bottom:2px">
+        <button onclick="setDnFilter('unpaid')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${dnFilter==='unpaid'?'#f59e0b':'#f0f0eb'};color:${dnFilter==='unpaid'?'#fff':'#555'}">⏳ รอรับ</button>
+        <button onclick="setDnFilter('all')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${dnFilter==='all'?'#111':'#f0f0eb'};color:${dnFilter==='all'?'#fff':'#555'}">ทั้งหมด</button>
+        ${months.map(m=>{
+          const d=new Date(m+'-01T00:00:00');
+          const lbl=d.toLocaleDateString('th-TH',{month:'short',year:'numeric'});
+          return `<button onclick="setDnFilter('${m}')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${dnFilter===m?'#10b981':'#f0f0eb'};color:${dnFilter===m?'#fff':'#555'}">💰 ${lbl}</button>`;
+        }).join('')}
+      </div></div>`;
+
+      // Filter data
+      let filtered;
+      if(dnFilter==='unpaid') filtered=dn.filter(e=>!e.paid);
+      else if(dnFilter==='all') filtered=dn;
+      else filtered=dn.filter(e=>e.paid&&e.date.startsWith(dnFilter));
+
+      if(!filtered.length){
+        h+=emp('✅',dnFilter==='unpaid'?'ไม่มีรายการรอรับเงิน':'ไม่มีรายการ','');
+      } else {
+        // Group by month for paid/all views
+        if(dnFilter==='unpaid'){
+          filtered.forEach(ev=>{ h+=ecard(ev); });
+        } else {
+          const groups={};
+          filtered.forEach(ev=>{
+            const d=new Date(ev.date+'T00:00:00');
+            const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+            const lbl=d.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+            if(!groups[key]) groups[key]={lbl,evts:[],total:0};
+            groups[key].evts.push(ev);
+            groups[key].total+=(parseFloat(ev.price)||0);
+          });
+          Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(k=>{
+            const g=groups[k];
+            h+=`<div><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:800;color:#555">📆 ${g.lbl}</span>
+              ${g.total>0?`<span style="font-size:11px;font-weight:700;color:#10b981">รวม ${g.total.toLocaleString('th-TH')} ฿</span>`:''}
+            </div>`;
+            g.evts.forEach(ev=>{ h+=ecard(ev); });
+            h+='</div>';
+          });
+        }
+      }
     } else {
       h+=emp('🏆','ยังไม่มีงานที่เสร็จ','กด "ทำเสร็จ?" ในนัดหมาย');
     }
@@ -390,11 +417,10 @@ function ecard(ev){
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       ${ev.done?`<span class="tag" style="background:#dcfce7;color:#16a34a">✅</span>`:''}
       ${ev.paid?`<span class="tag" style="background:#dbeafe;color:#1d4ed8">💰</span>`:''}
-      ${ev.slip?`<span class="tag" style="background:#f0fdf4;color:#16a34a">🧾</span>`:''}
+      ${ev.slip?`<span class="tag" style="background:#f0fdf4;color:#16a34a;cursor:pointer" onclick="event.stopPropagation();viewSlip('${ev.id}')">🧾 สลิป</span>`:''}
       <span style="color:#ddd;font-size:22px">›</span>
     </div>
   </div>
-  ${ev.slip&&ev.done?`<img src="${ev.slip}" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-top:10px;display:block;background:#f5f5f0;cursor:pointer" onclick="event.stopPropagation();viewSlip('${ev.id}')">`:''}
   </div>`;
 }
 
@@ -409,6 +435,7 @@ function viewSlip(id){
 }
 
 function setTab(t){ curTab=t; render(); }
+function setDnFilter(f){ window._dnFilter=f; render(); }
 function onFab(){ curTab===3 ? openAddEvt() : openAddTask(); }
 function showOv(id){ document.getElementById(id).classList.remove('hidden'); }
 function closeOv(id,e){ if(!e||e.target===document.getElementById(id)) document.getElementById(id).classList.add('hidden'); }
