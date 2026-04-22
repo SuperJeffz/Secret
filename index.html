@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
-/* CSS คงเดิมตามต้นฉบับเพื่อให้ UI เหมือนเดิม */
+/* CSS คงเดิมและเพิ่มสไตล์สำหรับปุ่มสถานะ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Sarabun',sans-serif;background:#0f0f0f;color:#111;overscroll-behavior:none;height:100dvh;display:flex;flex-direction:column}
 input,textarea,button{font-family:'Sarabun',sans-serif}
@@ -114,11 +114,22 @@ textarea.inp{resize:none}
     <div class="shb">
       <label class="lbl">ชื่องาน *</label>
       <input class="inp" id="t-text" placeholder="เช่น รีวิวครีมบำรุงผิว">
+      
+      <!-- Stage Selector (เพิ่มเข้ามา) -->
+      <div id="t-stage-section" class="hidden">
+        <label class="lbl">สถานะงาน</label>
+        <div class="prib" style="margin-bottom:18px">
+          <button class="pribtn stg-btn" data-s="todo" onclick="setEditStage('todo')">📋 งาน</button>
+          <button class="pribtn stg-btn" data-s="draft" onclick="setEditStage('draft')">✏️ ดราฟ</button>
+          <button class="pribtn stg-btn" data-s="post" onclick="setEditStage('post')">📤 รอโพส</button>
+        </div>
+      </div>
+
       <label class="lbl">ความเร่งด่วน</label>
       <div class="prib">
-        <button class="pribtn" data-p="high" onclick="setPri('high')" style="background:#f0f0eb;color:#555">🔴 ด่วน</button>
-        <button class="pribtn" data-p="medium" onclick="setPri('medium')" style="background:#111;color:#fff">🟡 ปกติ</button>
-        <button class="pribtn" data-p="low" onclick="setPri('low')" style="background:#f0f0eb;color:#555">🟢 ไม่เร่ง</button>
+        <button class="pribtn pri-btn" data-p="high" onclick="setPri('high')">🔴 ด่วน</button>
+        <button class="pribtn pri-btn" data-p="medium" onclick="setPri('medium')">🟡 ปกติ</button>
+        <button class="pribtn pri-btn" data-p="low" onclick="setPri('low')">🟢 ไม่เร่ง</button>
       </div>
       <label class="lbl">ราคางาน (ถ้ามี)</label>
       <input class="inp" id="t-price" placeholder="0" type="number" inputmode="numeric">
@@ -188,6 +199,10 @@ textarea.inp{resize:none}
       <button class="btn" id="evt-save-btn" onclick="saveEvt()">+ บันทึกนัดหมาย</button>
       <div class="divider hidden" id="evt-divider"></div>
       <button class="btn hidden" id="gcal-btn" style="background:#1a73e8" onclick="syncToGCal()">📅 เพิ่มใน Google Calendar</button>
+      
+      <!-- Revert Button (เพิ่มเข้ามา) -->
+      <button class="btn btng hidden" id="evt-revert-btn" onclick="revertToTask()" style="margin-bottom:10px">🔄 เปลี่ยนกลับเป็นงาน</button>
+      
       <button class="btn btnr hidden" id="evt-del-btn" onclick="delEvtSheet()">🗑 ลบนัดหมายนี้</button>
     </div>
   </div>
@@ -273,7 +288,7 @@ window.setBadge = setBadge;
 <script>
 const PC={high:'#ef4444',medium:'#f59e0b',low:'#10b981'};
 const PL={high:'🔴 ด่วน',medium:'🟡 ปกติ',low:'🟢 ไม่เร่ง'};
-let curTab=0, selPri='medium', schedId=null, editTId=null, editEId=null, photoB64=null, slipB64=null;
+let curTab=0, selPri='medium', selStage='todo', schedId=null, editTId=null, editEId=null, photoB64=null, slipB64=null;
 
 const pad=n=>String(n).padStart(2,'0');
 const toISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -458,38 +473,39 @@ function closeDov(id,e){ if(!e||e.target===document.getElementById(id)) document
 
 // ── Task Sheet ────────────────────────────────────────────
 function openAddTask(){
-  editTId=null;
-  photoB64=null; // รีเซ็ตค่ารูป
+  editTId=null; photoB64=null;
   document.getElementById('task-sh-title').textContent='➕ เพิ่มงานใหม่';
   document.getElementById('task-save-btn').textContent='+ บันทึกงาน';
   document.getElementById('task-del-btn').classList.add('hidden');
   document.getElementById('task-divider').classList.add('hidden');
   document.getElementById('task-gcal-btn').classList.add('hidden');
+  document.getElementById('t-stage-section').classList.add('hidden'); // ซ่อนการเปลี่ยนสถานะเมื่องานใหม่
   document.getElementById('t-text').value='';
   document.getElementById('t-price').value='';
   document.getElementById('t-script').value='';
   const td=today();
   document.getElementById('t-start').value=td;
   document.getElementById('t-end').value=plus7(td);
-  clearPhoto(); setPri('medium');
+  clearPhoto(); setPri('medium'); setEditStage('todo');
   showOv('ov-task');
 }
 
 function openEditTask(id){
   const t=window.tasks.find(x=>x.id===id); if(!t) return;
-  editTId=id;
-  photoB64 = t.photo || null; // โหลดรูปเดิมใส่ตัวแปร
+  editTId=id; photoB64 = t.photo || null;
   document.getElementById('task-sh-title').textContent='✏️ แก้ไขงาน';
   document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('task-del-btn').classList.remove('hidden');
   document.getElementById('task-divider').classList.remove('hidden');
   document.getElementById('task-gcal-btn').classList.remove('hidden');
+  document.getElementById('t-stage-section').classList.remove('hidden'); // โชว์การเปลี่ยนสถานะ
   document.getElementById('t-text').value=t.text||'';
   document.getElementById('t-price').value=t.price||'';
   document.getElementById('t-script').value=t.script||'';
   document.getElementById('t-start').value=t.startDate||today();
   document.getElementById('t-end').value=t.endDate||plus7(today());
   setPri(t.priority||'medium');
+  setEditStage(t.stage||'todo');
   if(t.photo){ document.getElementById('ph-prev').src=t.photo; document.getElementById('ph-wrap').classList.remove('hidden'); }
   else clearPhoto();
   showOv('ov-task');
@@ -499,7 +515,12 @@ document.getElementById('t-start').addEventListener('change',function(){ documen
 
 function setPri(p){
   selPri=p;
-  document.querySelectorAll('.pribtn').forEach(b=>{ const a=b.dataset.p===p; b.style.background=a?'#111':'#f0f0eb'; b.style.color=a?'#fff':'#555'; });
+  document.querySelectorAll('.pri-btn').forEach(b=>{ const a=b.dataset.p===p; b.style.background=a?'#111':'#f0f0eb'; b.style.color=a?'#fff':'#555'; });
+}
+
+function setEditStage(s){
+  selStage=s;
+  document.querySelectorAll('.stg-btn').forEach(b=>{ const a=b.dataset.s===s; b.style.background=a?'#111':'#fff'; b.style.color=a?'#fff':'#111'; b.style.border=a?'none':'1px solid #ddd'; });
 }
 
 function onPhoto(input){
@@ -511,8 +532,7 @@ function onPhoto(input){
       const mx=800; let w=img.width,h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-      const ctx=cv.getContext('2d');
-      ctx.drawImage(img,0,0,w,h);
+      cv.getContext('2d').drawImage(img,0,0,w,h);
       photoB64=cv.toDataURL('image/jpeg',0.65);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
@@ -549,6 +569,7 @@ function saveTask(){
   const data={
     text,
     priority: selPri||'medium',
+    stage: selStage||'todo',
     startDate: document.getElementById('t-start').value||today(),
     endDate: document.getElementById('t-end').value||plus7(today()),
     price: document.getElementById('t-price').value||'',
@@ -558,7 +579,7 @@ function saveTask(){
   if(editTId){
     window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
   } else {
-    window.tasks.push({id:Date.now()+'', stage:'todo', ...data});
+    window.tasks.push({id:Date.now()+'', ...data});
   }
   window.scheduleSave&&window.scheduleSave();
   closeOv('ov-task'); render();
@@ -612,7 +633,9 @@ function confirmSched(){
     if(!Array.isArray(window.evts)) window.evts=[];
     window.evts.push({id:Date.now()+'',title:t.text,date:d,
       time:document.getElementById('sched-t').value,
-      note:'📤 โพสงาน',price:t.price||'',done:false,paid:false});
+      note:'📤 โพสงาน',price:t.price||'',done:false,paid:false,
+      _origTask: {...t, stage:'post'} // เก็บสำรองข้อมูลงานเผื่อเปลี่ยนกลับ
+    });
     window.tasks=window.tasks.filter(x=>x.id!==schedId);
     window.scheduleSave&&window.scheduleSave();
   }
@@ -621,13 +644,13 @@ function confirmSched(){
 
 // ── Event Sheet ───────────────────────────────────────────
 function openAddEvt(){
-  editEId=null;
-  slipB64=null; // รีเซ็ตค่ารูปสลิป
+  editEId=null; slipB64=null;
   document.getElementById('evt-sh-title').textContent='📅 เพิ่มนัดหมาย';
   document.getElementById('evt-save-btn').textContent='+ บันทึกนัดหมาย';
   document.getElementById('evt-del-btn').classList.add('hidden');
   document.getElementById('evt-divider').classList.add('hidden');
   document.getElementById('gcal-btn').classList.add('hidden');
+  document.getElementById('evt-revert-btn').classList.add('hidden');
   document.getElementById('evt-togs').classList.add('hidden');
   document.getElementById('slip-section').classList.add('hidden');
   clearSlip();
@@ -641,13 +664,13 @@ function openAddEvt(){
 
 function openEditEvt(id){
   const ev=window.evts.find(x=>x.id===id); if(!ev) return;
-  editEId=id;
-  slipB64 = ev.slip || null; // โหลดรูปสลิปเดิม
+  editEId=id; slipB64 = ev.slip || null;
   document.getElementById('evt-sh-title').textContent='✏️ แก้ไขนัดหมาย';
   document.getElementById('evt-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('evt-del-btn').classList.remove('hidden');
   document.getElementById('evt-divider').classList.remove('hidden');
   document.getElementById('gcal-btn').classList.remove('hidden');
+  document.getElementById('evt-revert-btn').classList.toggle('hidden', !!ev.done); // ถ้าทำเสร็จแล้วไม่ให้ย้ายกลับ
   document.getElementById('evt-togs').classList.remove('hidden');
   document.getElementById('slip-section').classList.remove('hidden');
   if(ev.slip){ document.getElementById('slip-prev').src=ev.slip; document.getElementById('slip-wrap').classList.remove('hidden'); }
@@ -661,6 +684,30 @@ function openEditEvt(id){
   showOv('ov-evt');
 }
 
+function revertToTask(){
+  if(!editEId) return;
+  const ev = window.evts.find(e => e.id === editEId);
+  if(!ev) return;
+  
+  showConfirm('🔄 ย้ายกลับเป็นงาน?', ev.title, () => {
+    // กู้คืนข้อมูล Task เดิม (ถ้ามี) หรือสร้างใหม่จากข้อมูลนัดหมาย
+    const newTask = ev._origTask || {
+      id: Date.now() + '',
+      text: ev.title,
+      price: ev.price,
+      stage: 'post',
+      priority: 'medium',
+      startDate: today(),
+      endDate: plus7(today())
+    };
+    
+    window.tasks.push(newTask);
+    window.evts = window.evts.filter(e => e.id !== editEId);
+    window.scheduleSave && window.scheduleSave();
+    closeOv('ov-evt'); curTab = 2; render();
+  });
+}
+
 function refreshEvtTogs(ev){
   const db=document.getElementById('evt-done-tog');
   const pb=document.getElementById('evt-paid-tog');
@@ -671,7 +718,12 @@ function refreshEvtTogs(ev){
 function togEvDone(){
   if(!editEId) return;
   const i=window.evts.findIndex(e=>e.id===editEId);
-  if(i>=0){ window.evts[i]={...window.evts[i],done:!window.evts[i].done}; refreshEvtTogs(window.evts[i]); window.scheduleSave&&window.scheduleSave(); render(); }
+  if(i>=0){ 
+    window.evts[i]={...window.evts[i],done:!window.evts[i].done}; 
+    refreshEvtTogs(window.evts[i]); 
+    document.getElementById('evt-revert-btn').classList.toggle('hidden', window.evts[i].done);
+    window.scheduleSave&&window.scheduleSave(); render(); 
+  }
 }
 function togEvPaid(){
   if(!editEId) return;
@@ -806,7 +858,7 @@ function showConfirm(title, name, onConfirm){
     <div style="background:#fff5f5;border:2px solid #fecaca;border-radius:12px;padding:12px;margin-bottom:18px;font-size:14px;color:#b91c1c;line-height:1.6">${name}</div>
     <div style="display:flex;gap:10px">
       <button id="conf-cancel" style="flex:1;padding:14px;border:none;border-radius:13px;background:#f0f0eb;color:#555;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">ยกเลิก</button>
-      <button id="conf-ok" style="flex:2;padding:14px;border:none;border-radius:13px;background:#ef4444;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">🗑 ลบเลย</button>
+      <button id="conf-ok" style="flex:2;padding:14px;border:none;border-radius:13px;background:#ef4444;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">ยืนยัน</button>
     </div>
   </div>`;
   document.body.appendChild(d);
