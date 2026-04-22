@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
+/* CSS คงเดิมตามต้นฉบับเพื่อให้ UI เหมือนเดิม */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Sarabun',sans-serif;background:#0f0f0f;color:#111;overscroll-behavior:none;height:100dvh;display:flex;flex-direction:column}
 input,textarea,button{font-family:'Sarabun',sans-serif}
@@ -208,6 +209,22 @@ textarea.inp{resize:none}
   </div>
 </div>
 
+<!-- GCal DateTime Dialog -->
+<div class="dov hidden" id="dov-gcal" onclick="closeDov('dov-gcal',event)">
+  <div class="dlg" onclick="event.stopPropagation()">
+    <div class="dtitle">📅 เพิ่มใน Google Calendar</div>
+    <div class="dhint" id="gcal-dlg-name"></div>
+    <label class="lbl">วันที่ *</label>
+    <input class="inp" id="gcal-date" type="date">
+    <label class="lbl">เวลา (ถ้ามี)</label>
+    <input class="inp" id="gcal-time" type="time">
+    <div class="btr">
+      <button class="btn btng" onclick="closeDov('dov-gcal')">ยกเลิก</button>
+      <button class="btn" style="flex:2;background:#1a73e8" onclick="confirmGCal()">📅 เพิ่มเลย</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
@@ -315,11 +332,9 @@ function render(){
       const totP2=dn.filter(e=>e.paid).reduce((s,e)=>s+(parseFloat(e.price)||0),0);
       h+=`<div class="statb">${[['มูลค่ารวม',totA2,'#fff'],['ได้รับ',totP2,'#10b981'],['รอรับ',totA2-totP2,(totA2-totP2)>0?'#f59e0b':'#555']].map(([l,v,c],i)=>`<div class="stati"${i?' style="border-left:1px solid #2a2a2a;padding-left:14px"':''}><div class="statl">${l}</div><div class="statv" style="color:${c}">${v.toLocaleString('th-TH')} <span style="font-size:11px;font-weight:400">฿</span></div></div>`).join('')}</div>`;
 
-      // Filter tabs: all / paid / unpaid / by month
       const dnFilter = window._dnFilter||'unpaid';
       const months = [...new Set(dn.filter(e=>e.paid).map(e=>e.date.slice(0,7)))].sort((a,b)=>b.localeCompare(a));
 
-      // Filter buttons
       h+=`<div style="overflow-x:auto;scrollbar-width:none;margin-bottom:12px"><div style="display:flex;gap:6px;white-space:nowrap;padding-bottom:2px">
         <button onclick="setDnFilter('unpaid')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${dnFilter==='unpaid'?'#f59e0b':'#f0f0eb'};color:${dnFilter==='unpaid'?'#fff':'#555'}">⏳ รอรับ</button>
         <button onclick="setDnFilter('all')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${dnFilter==='all'?'#111':'#f0f0eb'};color:${dnFilter==='all'?'#fff':'#555'}">ทั้งหมด</button>
@@ -330,7 +345,6 @@ function render(){
         }).join('')}
       </div></div>`;
 
-      // Filter data
       let filtered;
       if(dnFilter==='unpaid') filtered=dn.filter(e=>!e.paid);
       else if(dnFilter==='all') filtered=dn;
@@ -339,7 +353,6 @@ function render(){
       if(!filtered.length){
         h+=emp('✅',dnFilter==='unpaid'?'ไม่มีรายการรอรับเงิน':'ไม่มีรายการ','');
       } else {
-        // Group by month for paid/all views
         if(dnFilter==='unpaid'){
           filtered.forEach(ev=>{ h+=ecard(ev); });
         } else {
@@ -423,7 +436,6 @@ function ecard(ev){
       ${ev.slip?`<span class="tag" style="background:#f0fdf4;color:#16a34a;cursor:pointer" onclick="event.stopPropagation();viewSlip('${ev.id}')">🧾 สลิป</span>`:''}
       <span style="color:#ddd;font-size:22px">›</span>
     </div>
-  </div>
   </div>`;
 }
 
@@ -447,6 +459,7 @@ function closeDov(id,e){ if(!e||e.target===document.getElementById(id)) document
 // ── Task Sheet ────────────────────────────────────────────
 function openAddTask(){
   editTId=null;
+  photoB64=null; // รีเซ็ตค่ารูป
   document.getElementById('task-sh-title').textContent='➕ เพิ่มงานใหม่';
   document.getElementById('task-save-btn').textContent='+ บันทึกงาน';
   document.getElementById('task-del-btn').classList.add('hidden');
@@ -465,6 +478,7 @@ function openAddTask(){
 function openEditTask(id){
   const t=window.tasks.find(x=>x.id===id); if(!t) return;
   editTId=id;
+  photoB64 = t.photo || null; // โหลดรูปเดิมใส่ตัวแปร
   document.getElementById('task-sh-title').textContent='✏️ แก้ไขงาน';
   document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('task-del-btn').classList.remove('hidden');
@@ -476,7 +490,7 @@ function openEditTask(id){
   document.getElementById('t-start').value=t.startDate||today();
   document.getElementById('t-end').value=t.endDate||plus7(today());
   setPri(t.priority||'medium');
-  if(t.photo){ photoB64=t.photo; document.getElementById('ph-prev').src=t.photo; document.getElementById('ph-wrap').classList.remove('hidden'); }
+  if(t.photo){ document.getElementById('ph-prev').src=t.photo; document.getElementById('ph-wrap').classList.remove('hidden'); }
   else clearPhoto();
   showOv('ov-task');
 }
@@ -497,7 +511,8 @@ function onPhoto(input){
       const mx=800; let w=img.width,h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
+      const ctx=cv.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
       photoB64=cv.toDataURL('image/jpeg',0.65);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
@@ -531,7 +546,6 @@ function clearSlip(){ slipB64=null; document.getElementById('slip-wrap').classLi
 function saveTask(){
   const text=document.getElementById('t-text').value.trim();
   if(!text){ alert('กรุณาใส่ชื่องาน'); return; }
-  if(!Array.isArray(window.tasks)) window.tasks=[];
   const data={
     text,
     priority: selPri||'medium',
@@ -539,7 +553,7 @@ function saveTask(){
     endDate: document.getElementById('t-end').value||plus7(today()),
     price: document.getElementById('t-price').value||'',
     script: document.getElementById('t-script').value||'',
-    photo: photoB64||null
+    photo: photoB64
   };
   if(editTId){
     window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
@@ -608,6 +622,7 @@ function confirmSched(){
 // ── Event Sheet ───────────────────────────────────────────
 function openAddEvt(){
   editEId=null;
+  slipB64=null; // รีเซ็ตค่ารูปสลิป
   document.getElementById('evt-sh-title').textContent='📅 เพิ่มนัดหมาย';
   document.getElementById('evt-save-btn').textContent='+ บันทึกนัดหมาย';
   document.getElementById('evt-del-btn').classList.add('hidden');
@@ -627,6 +642,7 @@ function openAddEvt(){
 function openEditEvt(id){
   const ev=window.evts.find(x=>x.id===id); if(!ev) return;
   editEId=id;
+  slipB64 = ev.slip || null; // โหลดรูปสลิปเดิม
   document.getElementById('evt-sh-title').textContent='✏️ แก้ไขนัดหมาย';
   document.getElementById('evt-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('evt-del-btn').classList.remove('hidden');
@@ -634,8 +650,7 @@ function openEditEvt(id){
   document.getElementById('gcal-btn').classList.remove('hidden');
   document.getElementById('evt-togs').classList.remove('hidden');
   document.getElementById('slip-section').classList.remove('hidden');
-  // โหลดรูปสลิปเดิม
-  if(ev.slip){ slipB64=ev.slip; document.getElementById('slip-prev').src=ev.slip; document.getElementById('slip-wrap').classList.remove('hidden'); }
+  if(ev.slip){ document.getElementById('slip-prev').src=ev.slip; document.getElementById('slip-wrap').classList.remove('hidden'); }
   else clearSlip();
   document.getElementById('e-title').value=ev.title||'';
   document.getElementById('e-date').value=ev.date||today();
@@ -668,12 +683,11 @@ function saveEvt(){
   const title=document.getElementById('e-title').value.trim();
   const date=document.getElementById('e-date').value;
   if(!title||!date) return;
-  if(!Array.isArray(window.evts)) window.evts=[];
   const data={title,date,
     time:document.getElementById('e-time').value,
     note:document.getElementById('e-note').value,
     price:document.getElementById('e-price').value,
-    slip:slipB64||null};
+    slip:slipB64};
   if(editEId){
     window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
   } else {
@@ -693,99 +707,29 @@ function delEvtSheet(){
   });
 }
 
-// ── Notifications ─────────────────────────────────────────
-async function reqPermission(){
-  if(!('Notification' in window)) return false;
-  if(Notification.permission==='granted') return true;
-  if(Notification.permission==='default') return (await Notification.requestPermission())==='granted';
-  return false;
-}
-
-function notify(title,body,tag){
-  if(Notification.permission==='granted'){
-    new Notification(title,{body,tag,icon:'https://em-content.zobj.net/source/google/387/clipboard_1f4cb.png',requireInteraction:true});
-  }
-}
-
-function scheduleNotif(id,title,date,time){
-  if(!time) return;
-  const [h,m]=time.split(':').map(Number);
-  const target=new Date(date+'T00:00:00'); target.setHours(h,m,0,0);
-  const ms=target.getTime()-Date.now();
-  if(ms<=0) return;
-  if(!window._nt) window._nt={};
-  if(window._nt[id]) clearTimeout(window._nt[id]);
-  window._nt[id]=setTimeout(()=>{ notify('📅 '+title,'ถึงเวลานัดหมาย '+time+' น.','evt_'+id); },ms);
-  const ms30=ms-30*60*1000;
-  if(ms30>0){ window._nt['pre_'+id]=setTimeout(()=>{ notify('⏰ ใกล้ถึงเวลา',title+' อีก 30 นาที','pre_'+id); },ms30); }
-}
-
-function checkTodayNotifs(){
-  const now=new Date(); now.setHours(0,0,0,0);
-  const td=toISO(now);
-  const tmrw=new Date(now); tmrw.setDate(tmrw.getDate()+1); const tm=toISO(tmrw);
-  (window.evts||[]).filter(e=>!e.done).forEach(ev=>{
-    if(ev.date===td){
-      const key='nt_'+ev.id+'_'+td;
-      if(!localStorage.getItem(key)){ notify('📅 นัดหมายวันนี้',ev.title+(ev.time?' เวลา '+ev.time+' น.':''),'t_'+ev.id); localStorage.setItem(key,'1'); }
-      if(ev.time) scheduleNotif(ev.id,ev.title,ev.date,ev.time);
-    }
-    if(ev.date===tm){
-      const key='ntm_'+ev.id+'_'+td;
-      if(!localStorage.getItem(key)){ notify('⏰ นัดหมายพรุ่งนี้',ev.title+(ev.time?' เวลา '+ev.time+' น.':''),'tm_'+ev.id); localStorage.setItem(key,'1'); }
-      if(ev.time) scheduleNotif(ev.id,ev.title,ev.date,ev.time);
-    }
-  });
-}
-
-setTimeout(async()=>{ if(await reqPermission()) checkTodayNotifs(); },1500);
-
 // ── Google Calendar Integration ───────────────────────────
 const GCAL_CLIENT_ID = '329376922736-lhd62dtu586vafdef29pj00f0c1r980j.apps.googleusercontent.com';
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 let gcalToken = null;
 
 function syncTaskToGCal(){
-  const t = window.tasks.find(x=>x.id===editTId);
+  const t=window.tasks.find(x=>x.id===editTId);
   if(!t) return;
-  const btn = document.getElementById('task-gcal-btn');
-
-  const doSync = () => {
-    btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true;
-    // ใช้ endDate เป็นวันนัด ถ้าไม่มีใช้วันนี้
-    const date = t.endDate || today();
-    const evObj = {title: t.text, date, time:'', note: t.script||t.price?'ราคา: '+(t.price||'')+' ฿':''};
-    createGCalEventObj(evObj, btn);
-  };
-
-  if(gcalToken){ doSync(); }
-  else {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE,
-      callback: (resp)=>{ if(resp.error)return; gcalToken=resp.access_token; doSync(); }
-    });
-    client.requestAccessToken();
-  }
+  document.getElementById('gcal-dlg-name').textContent=t.text;
+  document.getElementById('gcal-date').value=t.endDate||today();
+  document.getElementById('gcal-time').value='';
+  window._gcalSource='task';
+  showOv('dov-gcal');
 }
 
 function syncToGCal(){
   const ev=window.evts.find(e=>e.id===editEId);
   if(!ev) return;
-  const btn=document.getElementById('gcal-btn');
-  if(gcalToken){ btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true; createGCalEventObj(ev,btn); }
-  else {
-    const client=google.accounts.oauth2.initTokenClient({
-      client_id:GCAL_CLIENT_ID, scope:GCAL_SCOPE,
-      callback:(resp)=>{ if(resp.error)return; gcalToken=resp.access_token; btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true; createGCalEventObj(ev,btn); }
-    });
-    client.requestAccessToken();
-  }
-}
-
-async function createGCalEvent(ev){
-  const btn = document.getElementById('gcal-btn');
-  btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true;
-  createGCalEventObj(ev, btn);
+  document.getElementById('gcal-dlg-name').textContent=ev.title;
+  document.getElementById('gcal-date').value=ev.date||today();
+  document.getElementById('gcal-time').value=ev.time||'';
+  window._gcalSource='evt';
+  showOv('dov-gcal');
 }
 
 async function createGCalEventObj(ev, btn){
@@ -812,16 +756,45 @@ async function createGCalEventObj(ev, btn){
     });
     const data=await res.json();
     if(data.id){
-      if(editEId){
-        const i=window.evts.findIndex(e=>e.id===editEId);
-        if(i>=0){window.evts[i]={...window.evts[i],gcalId:data.id};window.scheduleSave&&window.scheduleSave();}
-      }
       btn.textContent='✅ เพิ่มแล้ว!'; btn.style.background='#10b981';
       setTimeout(()=>{btn.textContent='📅 เพิ่มใน Google Calendar';btn.style.background='#1a73e8';btn.disabled=false;},3000);
     } else { throw new Error(data.error?.message||'error'); }
   } catch(e){
     btn.textContent='❌ ลองใหม่อีกครั้ง'; btn.style.background='#ef4444'; btn.disabled=false;
     setTimeout(()=>{btn.textContent='📅 เพิ่มใน Google Calendar';btn.style.background='#1a73e8';},3000);
+  }
+}
+
+function confirmGCal(){
+  const date=document.getElementById('gcal-date').value;
+  if(!date) return;
+  const time=document.getElementById('gcal-time').value;
+  const src=window._gcalSource;
+  let title='', note='';
+  if(src==='task'){
+    const t=window.tasks.find(x=>x.id===editTId);
+    if(!t) return;
+    title=t.text;
+    note=(t.price?'ราคา: '+t.price+' ฿\n':'')+(t.script||'');
+  } else {
+    const ev=window.evts.find(e=>e.id===editEId);
+    if(!ev) return;
+    title=ev.title; note=ev.note||'';
+  }
+  closeDov('dov-gcal');
+  const evObj={title,date,time,note};
+  const btnId=src==='task'?'task-gcal-btn':'gcal-btn';
+  const btn=document.getElementById(btnId);
+  btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true;
+
+  const doCreate=()=>createGCalEventObj(evObj,btn);
+  if(gcalToken){ doCreate(); }
+  else {
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:GCAL_CLIENT_ID, scope:GCAL_SCOPE,
+      callback:(resp)=>{ if(resp.error){btn.textContent='📅 เพิ่มใน Google Calendar';btn.disabled=false;return;} gcalToken=resp.access_token; doCreate(); }
+    });
+    client.requestAccessToken();
   }
 }
 
