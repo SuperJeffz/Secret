@@ -136,6 +136,7 @@ textarea.inp{resize:none}
       </div>
       <button class="btn" id="task-save-btn" onclick="saveTask()">+ บันทึกงาน</button>
       <div class="divider hidden" id="task-divider"></div>
+      <button class="btn hidden" id="task-gcal-btn" style="background:#1a73e8;margin-bottom:10px" onclick="syncTaskToGCal()">📅 เพิ่มใน Google Calendar</button>
       <button class="btn btnr hidden" id="task-del-btn" onclick="delTaskSheet()">🗑 ลบงานนี้</button>
     </div>
   </div>
@@ -450,6 +451,7 @@ function openAddTask(){
   document.getElementById('task-save-btn').textContent='+ บันทึกงาน';
   document.getElementById('task-del-btn').classList.add('hidden');
   document.getElementById('task-divider').classList.add('hidden');
+  document.getElementById('task-gcal-btn').classList.add('hidden');
   document.getElementById('t-text').value='';
   document.getElementById('t-price').value='';
   document.getElementById('t-script').value='';
@@ -467,6 +469,7 @@ function openEditTask(id){
   document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('task-del-btn').classList.remove('hidden');
   document.getElementById('task-divider').classList.remove('hidden');
+  document.getElementById('task-gcal-btn').classList.remove('hidden');
   document.getElementById('t-text').value=t.text||'';
   document.getElementById('t-price').value=t.price||'';
   document.getElementById('t-script').value=t.script||'';
@@ -742,20 +745,38 @@ const GCAL_CLIENT_ID = '329376922736-lhd62dtu586vafdef29pj00f0c1r980j.apps.googl
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 let gcalToken = null;
 
-function syncToGCal(){
-  const ev = window.evts.find(e=>e.id===editEId);
-  if(!ev) return;
-  if(gcalToken){
-    createGCalEvent(ev);
-  } else {
+function syncTaskToGCal(){
+  const t = window.tasks.find(x=>x.id===editTId);
+  if(!t) return;
+  const btn = document.getElementById('task-gcal-btn');
+
+  const doSync = () => {
+    btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true;
+    // ใช้ endDate เป็นวันนัด ถ้าไม่มีใช้วันนี้
+    const date = t.endDate || today();
+    const evObj = {title: t.text, date, time:'', note: t.script||t.price?'ราคา: '+(t.price||'')+' ฿':''};
+    createGCalEventObj(evObj, btn);
+  };
+
+  if(gcalToken){ doSync(); }
+  else {
     const client = google.accounts.oauth2.initTokenClient({
-      client_id: GCAL_CLIENT_ID,
-      scope: GCAL_SCOPE,
-      callback: (resp) => {
-        if(resp.error) return;
-        gcalToken = resp.access_token;
-        createGCalEvent(ev);
-      }
+      client_id: GCAL_CLIENT_ID, scope: GCAL_SCOPE,
+      callback: (resp)=>{ if(resp.error)return; gcalToken=resp.access_token; doSync(); }
+    });
+    client.requestAccessToken();
+  }
+}
+
+function syncToGCal(){
+  const ev=window.evts.find(e=>e.id===editEId);
+  if(!ev) return;
+  const btn=document.getElementById('gcal-btn');
+  if(gcalToken){ btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true; createGCalEventObj(ev,btn); }
+  else {
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:GCAL_CLIENT_ID, scope:GCAL_SCOPE,
+      callback:(resp)=>{ if(resp.error)return; gcalToken=resp.access_token; btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true; createGCalEventObj(ev,btn); }
     });
     client.requestAccessToken();
   }
@@ -763,51 +784,43 @@ function syncToGCal(){
 
 async function createGCalEvent(ev){
   const btn = document.getElementById('gcal-btn');
-  btn.textContent = '⏳ กำลังเพิ่ม...';
-  btn.disabled = true;
+  btn.textContent='⏳ กำลังเพิ่ม...'; btn.disabled=true;
+  createGCalEventObj(ev, btn);
+}
 
+async function createGCalEventObj(ev, btn){
   let start, end;
   if(ev.time){
-    const dt = ev.date + 'T' + ev.time + ':00';
-    const endDate = new Date(dt);
-    endDate.setHours(endDate.getHours()+1);
-    const pad = n=>String(n).padStart(2,'0');
-    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
-    start = {dateTime: fmt(new Date(dt)), timeZone:'Asia/Bangkok'};
-    end   = {dateTime: fmt(endDate),      timeZone:'Asia/Bangkok'};
+    const dt=ev.date+'T'+ev.time+':00';
+    const endDate=new Date(dt); endDate.setHours(endDate.getHours()+1);
+    const p=n=>String(n).padStart(2,'0');
+    const fmt=d=>`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;
+    start={dateTime:fmt(new Date(dt)),timeZone:'Asia/Bangkok'};
+    end={dateTime:fmt(endDate),timeZone:'Asia/Bangkok'};
   } else {
-    start = {date: ev.date};
-    end   = {date: ev.date};
+    start={date:ev.date}; end={date:ev.date};
   }
-
-  const body = {
-    summary: ev.title,
-    description: ev.note||'',
-    start, end,
-    reminders: {useDefault:false, overrides:[{method:'popup',minutes:30},{method:'popup',minutes:0}]}
+  const body={
+    summary:ev.title, description:ev.note||'', start, end,
+    reminders:{useDefault:false,overrides:[{method:'popup',minutes:30},{method:'popup',minutes:0}]}
   };
-
   try{
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+    const res=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
       method:'POST',
       headers:{'Authorization':'Bearer '+gcalToken,'Content-Type':'application/json'},
-      body: JSON.stringify(body)
+      body:JSON.stringify(body)
     });
-    const data = await res.json();
+    const data=await res.json();
     if(data.id){
-      // บันทึก gcalId ไว้
-      const i = window.evts.findIndex(e=>e.id===editEId);
-      if(i>=0){ window.evts[i]={...window.evts[i],gcalId:data.id}; window.scheduleSave&&window.scheduleSave(); }
-      btn.textContent='✅ เพิ่มแล้ว!';
-      btn.style.background='#10b981';
+      if(editEId){
+        const i=window.evts.findIndex(e=>e.id===editEId);
+        if(i>=0){window.evts[i]={...window.evts[i],gcalId:data.id};window.scheduleSave&&window.scheduleSave();}
+      }
+      btn.textContent='✅ เพิ่มแล้ว!'; btn.style.background='#10b981';
       setTimeout(()=>{btn.textContent='📅 เพิ่มใน Google Calendar';btn.style.background='#1a73e8';btn.disabled=false;},3000);
-    } else {
-      throw new Error(data.error?.message||'error');
-    }
+    } else { throw new Error(data.error?.message||'error'); }
   } catch(e){
-    btn.textContent='❌ ลองใหม่อีกครั้ง';
-    btn.style.background='#ef4444';
-    btn.disabled=false;
+    btn.textContent='❌ ลองใหม่อีกครั้ง'; btn.style.background='#ef4444'; btn.disabled=false;
     setTimeout(()=>{btn.textContent='📅 เพิ่มใน Google Calendar';btn.style.background='#1a73e8';},3000);
   }
 }
