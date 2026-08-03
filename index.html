@@ -346,9 +346,13 @@ window.scheduleSave = function(){
       await setDoc(doc(db,'users',UID,'data','main'),
         {tasks:window.tasks, evts:window.evts, updatedAt:serverTimestamp()},{merge:true});
       setBadge('synced');
-    }catch(e){ setBadge('offline'); }
-    finally{ setTimeout(()=>{ isSaving = false; }, 2000); }
-  }, 800);
+    }catch(e){ 
+      setBadge('offline');
+      console.error(e);
+      alert('❌ บันทึกล้มเหลว! ขนาดข้อมูล/รูปภาพอาจใหญ่เกินไป กรุณาลองลบรูปบางรูปแล้วลองใหม่อีกครั้ง');
+    }
+    finally{ setTimeout(()=>{ isSaving = false; }, 1500); }
+  }, 500);
 };
 
 function setBadge(s){
@@ -580,11 +584,13 @@ function onPhoto(input){
   reader.onload = function(e){
     const img = new Image();
     img.onload = function(){
-      const mx=800; let w=img.width, h=img.height;
+      // ปรับขนาดความกว้าง/สูงสูงสุดไม่เกิน 500px เพื่อย่อไฟล์ให้เล็กลดปัญหาเกิน 1MB
+      const mx=500; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      photoB64=cv.toDataURL('image/jpeg',0.65);
+      // ลด Quality เหลือ 0.40 เพื่อให้ขนาดไฟล์เล็กที่สุด
+      photoB64=cv.toDataURL('image/jpeg',0.40);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
     };
@@ -601,11 +607,12 @@ function onSlipPhoto(input){
   reader.onload = function(e){
     const img = new Image();
     img.onload = function(){
-      const mx=1000; let w=img.width, h=img.height;
+      // ปรับขนาดสลิปสูงสุดไม่เกิน 600px
+      const mx=600; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      slipB64=cv.toDataURL('image/jpeg',0.8);
+      slipB64=cv.toDataURL('image/jpeg',0.50);
       document.getElementById('slip-prev').src=slipB64;
       document.getElementById('slip-wrap').classList.remove('hidden');
     };
