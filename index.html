@@ -210,9 +210,9 @@ textarea.inp{resize:none}
       <label class="lbl">สคริปต์ / บทพูด (ถ้ามี)</label>
       <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <label class="lbl">รูปภาพ (ถ้ามี)</label>
-      <label class="photob" style="cursor:pointer;display:flex;position:relative;overflow:hidden">
-        <span style="pointer-events:none">📷 ถ่าย / เลือกรูป</span>
-        <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer" onchange="onPhoto(this)">
+      <label class="photob" style="display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;cursor:pointer">
+        <span>📷 ถ่าย / เลือกรูป</span>
+        <input type="file" accept="image/*" capture="environment" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0" onchange="onPhoto(this)">
       </label>
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
@@ -261,9 +261,9 @@ textarea.inp{resize:none}
       </div>
       <div id="slip-section" class="hidden">
         <label class="lbl">รูปสลิปการโอนเงิน (ถ้ามี)</label>
-        <label class="photob" style="cursor:pointer;display:flex;position:relative;overflow:hidden">
-          <span style="pointer-events:none">📎 แนบสลิป</span>
-          <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer" onchange="onSlipPhoto(this)">
+        <label class="photob" style="display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;cursor:pointer">
+          <span>📎 แนบสลิป</span>
+          <input type="file" accept="image/*" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0" onchange="onSlipPhoto(this)">
         </label>
         <div id="slip-wrap" class="hidden">
           <div class="phwrap"><img id="slip-prev" class="phprev"><button class="phdel" onclick="clearSlip()">✕</button></div>
