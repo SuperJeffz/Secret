@@ -621,6 +621,7 @@ function saveTask(){
     script: document.getElementById('t-script').value||'',
     photo: photoB64
   };
+  if(!Array.isArray(window.tasks)) window.tasks=[];
   if(editTId) window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
   else window.tasks.push({id:Date.now()+'', ...data});
   window.scheduleSave&&window.scheduleSave();
@@ -729,6 +730,7 @@ function revertToTask(){
   if(!ev) return;
   showConfirm('🔄 ย้ายกลับเป็นงาน?', ev.title, () => {
     const newTask = ev._origTask || {id:Date.now()+'',text:ev.title,price:ev.price,stage:'post',priority:'medium',startDate:today(),endDate:plus7(today())};
+    if(!Array.isArray(window.tasks)) window.tasks=[];
     window.tasks.push(newTask);
     window.evts = window.evts.filter(e => e.id !== editEId);
     window.scheduleSave && window.scheduleSave();
@@ -764,6 +766,7 @@ function saveEvt(){
   const date=document.getElementById('e-date').value;
   if(!title||!date) return;
   const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value,slip:slipB64};
+  if(!Array.isArray(window.evts)) window.evts=[];
   if(editEId) window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
   else window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
   window.scheduleSave&&window.scheduleSave();
