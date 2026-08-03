@@ -9,6 +9,7 @@
 <title>เลขาส่วนตัว</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* Reset & Base Styles */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -315,6 +316,24 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
+// Init Supabase
+const SUPABASE_URL = "https://hcjgemqjpahprjugeywj.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjamdlbXFqcGFocHJqdWdleXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQyNzIsImV4cCI6MjEwMTMyMDI3Mn0.mh1k9I-n-r-ybXNYxCBLFbfBGDs0g_S0b6-4LmPF-io";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Helper function สำหรับอัปโหลดภาพเข้า Supabase Storage Bucket 'photos'
+window.uploadToSupabase = async function(fileBlob) {
+  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.jpg`;
+  const { data, error } = await supabaseClient.storage.from('photos').upload(fileName, fileBlob, {
+    contentType: 'image/jpeg',
+    upsert: true
+  });
+  if(error) throw error;
+  const { data: publicUrlData } = supabaseClient.storage.from('photos').getPublicUrl(fileName);
+  return publicUrlData.publicUrl;
+};
+
+// Init Firebase
 const app = initializeApp({
   apiKey:"AIzaSyDp3rlayAmk4l_8DUol98BPQBQPxLJbtTA",
   authDomain:"secretary-c3acf.firebaseapp.com",
@@ -337,51 +356,12 @@ onSnapshot(doc(db,'users',UID,'data','main'), snap => {
   setBadge('synced');
 }, () => setBadge('offline'));
 
-// ฟังก์ชันลบรูปภาพเก่าที่สุดเมื่อข้อมูลใกล้เต็ม (Auto-Cleanup Oldest Images)
-window.autoCleanOldImages = function() {
-  const MAX_BYTES = 800 * 1024; // ลิมิตความปลอดภัยที่ 800 KB ( Firestore Limit คือ 1MB )
-  
-  let totalSize = new Blob([JSON.stringify({tasks: window.tasks, evts: window.evts})]).size;
-  
-  while (totalSize > MAX_BYTES) {
-    let removedImage = false;
-    
-    // 1. ค้นหารูปภาพเก่าที่สุดใน tasks
-    for (let i = 0; i < window.tasks.length; i++) {
-      if (window.tasks[i].photo) {
-        window.tasks[i].photo = null;
-        removedImage = true;
-        break;
-      }
-    }
-    
-    // 2. ถ้าใน tasks ไม่มีรูปเหลืออยู่แล้ว ให้หาลบใน evts (สลิป) ต่อ
-    if (!removedImage) {
-      for (let i = 0; i < window.evts.length; i++) {
-        if (window.evts[i].slip) {
-          window.evts[i].slip = null;
-          removedImage = true;
-          break;
-        }
-      }
-    }
-    
-    // ถ้าไม่มีรูปภาพให้ลบแล้วแต่ยังเกิน ให้หลุดลูป
-    if (!removedImage) break;
-    
-    totalSize = new Blob([JSON.stringify({tasks: window.tasks, evts: window.evts})]).size;
-  }
-};
-
 window.scheduleSave = function(){
   isSaving = true;
   setBadge('syncing');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async()=>{
     try{
-      // ตรวจสอบและวนลบรูปเก่าถ้ารวมแล้วขนาดเกิน 800KB
-      window.autoCleanOldImages();
-
       await setDoc(doc(db,'users',UID,'data','main'),
         {tasks:window.tasks, evts:window.evts, updatedAt:serverTimestamp()},{merge:true});
       setBadge('synced');
@@ -406,7 +386,7 @@ window.setBadge = setBadge;
 <script>
 const PC={high:'#ef4444',medium:'#f59e0b',low:'#10b981'};
 const PL={high:'🔴 ด่วน',medium:'🟡 ปกติ',low:'🟢 ไม่เร่ง'};
-let curTab=0, selPri='medium', selStage='todo', schedId=null, editTId=null, editEId=null, photoB64=null, slipB64=null;
+let curTab=0, selPri='medium', selStage='todo', schedId=null, editTId=null, editEId=null, photoFile=null, photoUrl=null, slipFile=null, slipUrl=null;
 
 const pad=n=>String(n).padStart(2,'0');
 const toISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -566,7 +546,7 @@ function closeDov(id,e){ if(!e||e.target===document.getElementById(id)) document
 
 // ── Task Sheet ────────────────────────────────────────────
 function openAddTask(){
-  editTId=null; photoB64=null;
+  editTId=null; photoFile=null; photoUrl=null;
   document.getElementById('task-sh-title').textContent='➕ เพิ่มงานใหม่';
   document.getElementById('task-save-btn').textContent='+ บันทึกงาน';
   document.getElementById('task-del-btn').classList.add('hidden');
@@ -585,7 +565,7 @@ function openAddTask(){
 
 function openEditTask(id){
   const t=window.tasks.find(x=>x.id===id); if(!t) return;
-  editTId=id; photoB64 = t.photo || null;
+  editTId=id; photoFile=null; photoUrl=t.photo||null;
   document.getElementById('task-sh-title').textContent='✏️ แก้ไขงาน';
   document.getElementById('task-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('task-del-btn').classList.remove('hidden');
@@ -616,68 +596,81 @@ function setEditStage(s){
   document.querySelectorAll('.stg-btn').forEach(b=>{ const a=b.dataset.s===s; b.style.background=a?'#111':'#fff'; b.style.color=a?'#fff':'#111'; b.style.border=a?'none':'1px solid #ddd'; });
 }
 
-// ย่อรูปภาพให้ขนาดเล็กมาก (สูงสุด 400px, คุณภาพ 0.45)
-function onPhoto(input){
-  if(!input||!input.files||!input.files[0]) return;
-  const file = input.files[0];
+function processImageFile(file, callback){
   const reader = new FileReader();
   reader.onload = function(e){
     const img = new Image();
     img.onload = function(){
-      const mx=400; let w=img.width, h=img.height;
+      const mx=800; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      photoB64=cv.toDataURL('image/jpeg',0.45);
-      document.getElementById('ph-prev').src=photoB64;
-      document.getElementById('ph-wrap').classList.remove('hidden');
+      cv.toBlob((blob) => { callback(blob, cv.toDataURL('image/jpeg', 0.8)); }, 'image/jpeg', 0.8);
     };
     img.src=e.target.result;
   };
   reader.readAsDataURL(file);
 }
-function clearPhoto(){ photoB64=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
+
+function onPhoto(input){
+  if(!input||!input.files||!input.files[0]) return;
+  processImageFile(input.files[0], (blob, previewUrl) => {
+    photoFile = blob;
+    document.getElementById('ph-prev').src = previewUrl;
+    document.getElementById('ph-wrap').classList.remove('hidden');
+  });
+}
+function clearPhoto(){ photoFile=null; photoUrl=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
 
 function onSlipPhoto(input){
   if(!input||!input.files||!input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      const mx=400; let w=img.width, h=img.height;
-      if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
-      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
-      slipB64=cv.toDataURL('image/jpeg',0.45);
-      document.getElementById('slip-prev').src=slipB64;
-      document.getElementById('slip-wrap').classList.remove('hidden');
-    };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
+  processImageFile(input.files[0], (blob, previewUrl) => {
+    slipFile = blob;
+    document.getElementById('slip-prev').src = previewUrl;
+    document.getElementById('slip-wrap').classList.remove('hidden');
+  });
 }
-function clearSlip(){ slipB64=null; document.getElementById('slip-wrap').classList.add('hidden'); document.getElementById('slip-prev').src=''; }
+function clearSlip(){ slipFile=null; slipUrl=null; document.getElementById('slip-wrap').classList.add('hidden'); document.getElementById('slip-prev').src=''; }
 
-function saveTask(){
+async function saveTask(){
   const text=document.getElementById('t-text').value.trim();
   if(!text){ alert('กรุณาใส่ชื่องาน'); return; }
-  const data={
-    text,
-    priority: selPri||'medium',
-    stage: selStage||'todo',
-    startDate: document.getElementById('t-start').value||today(),
-    endDate: document.getElementById('t-end').value||plus7(today()),
-    price: document.getElementById('t-price').value||'',
-    script: document.getElementById('t-script').value||'',
-    photo: photoB64||null
-  };
-  if(!Array.isArray(window.tasks)) window.tasks=[];
-  if(editTId) window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
-  else window.tasks.push({id:Date.now()+'', ...data});
   
-  window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-task'); render();
+  const saveBtn = document.getElementById('task-save-btn');
+  const oldText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    let finalPhotoUrl = photoUrl;
+    if(photoFile) {
+      saveBtn.textContent = '📤 กำลังอัปโหลดรูปภาพ...';
+      finalPhotoUrl = await window.uploadToSupabase(photoFile);
+    }
+
+    const data={
+      text,
+      priority: selPri||'medium',
+      stage: selStage||'todo',
+      startDate: document.getElementById('t-start').value||today(),
+      endDate: document.getElementById('t-end').value||plus7(today()),
+      price: document.getElementById('t-price').value||'',
+      script: document.getElementById('t-script').value||'',
+      photo: finalPhotoUrl||null
+    };
+    if(!Array.isArray(window.tasks)) window.tasks=[];
+    if(editTId) window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
+    else window.tasks.push({id:Date.now()+'', ...data});
+    
+    window.scheduleSave&&window.scheduleSave();
+    closeOv('ov-task'); render();
+  } catch(e) {
+    console.error(e);
+    alert('❌ อัปโหลดรูปภาพล้มเหลว กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = oldText;
+  }
 }
 
 function delTaskSheet(){
@@ -736,7 +729,7 @@ function confirmSched(){
 }
 
 function openAddEvt(){
-  editEId=null; slipB64=null;
+  editEId=null; slipFile=null; slipUrl=null;
   document.getElementById('evt-sh-title').textContent='📅 เพิ่มนัดหมาย';
   document.getElementById('evt-save-btn').textContent='+ บันทึกนัดหมาย';
   document.getElementById('evt-del-btn').classList.add('hidden');
@@ -756,7 +749,7 @@ function openAddEvt(){
 
 function openEditEvt(id){
   const ev=window.evts.find(x=>x.id===id); if(!ev) return;
-  editEId=id; slipB64 = ev.slip || null;
+  editEId=id; slipFile=null; slipUrl=ev.slip||null;
   document.getElementById('evt-sh-title').textContent='✏️ แก้ไขนัดหมาย';
   document.getElementById('evt-save-btn').textContent='💾 บันทึกการแก้ไข';
   document.getElementById('evt-del-btn').classList.remove('hidden');
@@ -812,16 +805,36 @@ function togEvPaid(){
   if(i>=0){ window.evts[i]={...window.evts[i],paid:!window.evts[i].paid}; refreshEvtTogs(window.evts[i]); window.scheduleSave&&window.scheduleSave(); render(); }
 }
 
-function saveEvt(){
+async function saveEvt(){
   const title=document.getElementById('e-title').value.trim();
   const date=document.getElementById('e-date').value;
   if(!title||!date) return;
-  const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value,slip:slipB64};
-  if(editEId) window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
-  else window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
-  
-  window.scheduleSave&&window.scheduleSave();
-  closeOv('ov-evt'); render();
+
+  const saveBtn = document.getElementById('evt-save-btn');
+  const oldText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    let finalSlipUrl = slipUrl;
+    if(slipFile) {
+      saveBtn.textContent = '📤 กำลังอัปโหลดสลิป...';
+      finalSlipUrl = await window.uploadToSupabase(slipFile);
+    }
+
+    const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value,slip:finalSlipUrl};
+    if(editEId) window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
+    else window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
+    
+    window.scheduleSave&&window.scheduleSave();
+    closeOv('ov-evt'); render();
+  } catch(e) {
+    console.error(e);
+    alert('❌ อัปโหลดสลิป ล้มเหลว กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = oldText;
+  }
 }
 
 function delEvtSheet(){
