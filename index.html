@@ -211,11 +211,9 @@ textarea.inp{resize:none}
       <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <label class="lbl">รูปภาพ (ถ้ามี)</label>
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('cam')">📷 ถ่ายรูป</button>
-        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('gal')">🖼️ คลัง</button>
+        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="document.getElementById('fi-cam').click()">📷 ถ่ายรูป</button>
+        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="document.getElementById('fi-gal').click()">🖼️ คลัง</button>
       </div>
-      <input type="file" id="fi-cam" accept="image/*" capture="environment" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onPhoto(this)">
-      <input type="file" id="fi-gal" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onPhoto(this)">
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
@@ -264,11 +262,9 @@ textarea.inp{resize:none}
       <div id="slip-section" class="hidden">
         <label class="lbl">รูปสลิปการโอนเงิน (ถ้ามี)</label>
         <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('cam')">📷 ถ่ายสลิป</button>
-          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('gal')">🖼️ เลือกสลิป</button>
+          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="document.getElementById('fi-slip-cam').click()">📷 ถ่ายสลิป</button>
+          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="document.getElementById('fi-slip-gal').click()">🖼️ เลือกสลิป</button>
         </div>
-        <input type="file" id="fi-slip-cam" accept="image/*" capture="environment" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onSlipPhoto(this)">
-        <input type="file" id="fi-slip-gal" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onSlipPhoto(this)">
         <div id="slip-wrap" class="hidden">
           <div class="phwrap"><img id="slip-prev" class="phprev"><button class="phdel" onclick="clearSlip()">✕</button></div>
         </div>
@@ -573,46 +569,44 @@ function setEditStage(s){
 }
 
 function onPhoto(input){
-  if(!input.files||!input.files[0]) return;
-  const f=input.files[0];
-  const r=new FileReader();
-  r.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const mx=800; let w=img.width,h=img.height;
+  if(!input||!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const mx=800; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
       photoB64=cv.toDataURL('image/jpeg',0.65);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
-      try{input.value='';}catch(e){}
     };
     img.src=e.target.result;
   };
-  r.readAsDataURL(f);
+  reader.readAsDataURL(file);
 }
 function clearPhoto(){ photoB64=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
 
 function onSlipPhoto(input){
-  if(!input.files||!input.files[0]) return;
-  const f=input.files[0];
-  const r=new FileReader();
-  r.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const mx=1000; let w=img.width,h=img.height;
+  if(!input||!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const mx=1000; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
       slipB64=cv.toDataURL('image/jpeg',0.8);
       document.getElementById('slip-prev').src=slipB64;
       document.getElementById('slip-wrap').classList.remove('hidden');
-      try{input.value='';}catch(e){}
     };
     img.src=e.target.result;
   };
-  r.readAsDataURL(f);
+  reader.readAsDataURL(file);
 }
 function clearSlip(){ slipB64=null; document.getElementById('slip-wrap').classList.add('hidden'); document.getElementById('slip-prev').src=''; }
 
@@ -627,7 +621,7 @@ function saveTask(){
     endDate: document.getElementById('t-end').value||plus7(today()),
     price: document.getElementById('t-price').value||'',
     script: document.getElementById('t-script').value||'',
-    photo: photoB64
+    photo: photoB64||null
   };
   if(!Array.isArray(window.tasks)) window.tasks=[];
   if(editTId) window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
@@ -738,7 +732,6 @@ function revertToTask(){
   if(!ev) return;
   showConfirm('🔄 ย้ายกลับเป็นงาน?', ev.title, () => {
     const newTask = ev._origTask || {id:Date.now()+'',text:ev.title,price:ev.price,stage:'post',priority:'medium',startDate:today(),endDate:plus7(today())};
-    if(!Array.isArray(window.tasks)) window.tasks=[];
     window.tasks.push(newTask);
     window.evts = window.evts.filter(e => e.id !== editEId);
     window.scheduleSave && window.scheduleSave();
@@ -774,7 +767,6 @@ function saveEvt(){
   const date=document.getElementById('e-date').value;
   if(!title||!date) return;
   const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value,slip:slipB64};
-  if(!Array.isArray(window.evts)) window.evts=[];
   if(editEId) window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
   else window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
   window.scheduleSave&&window.scheduleSave();
@@ -884,18 +876,11 @@ function showConfirm(title, name, onConfirm){
   d.onclick=e=>{ if(e.target===d) d.remove(); };
 }
 
-function triggerPhoto(type){
-  const id = type==='cam'?'fi-cam':'fi-gal';
-  const el = document.getElementById(id);
-  if(!el){ alert('ไม่พบ element: '+id); return; }
-  el.click();
-}
-function triggerSlip(type){
-  const el = document.getElementById(type==='cam'?'fi-slip-cam':'fi-slip-gal');
-  if(el) el.click();
-}
-
 render();
 </script>
+<input type="file" id="fi-cam" accept="image/*" capture="environment" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0" onchange="onPhoto(this)">
+<input type="file" id="fi-gal" accept="image/*" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0" onchange="onPhoto(this)">
+<input type="file" id="fi-slip-cam" accept="image/*" capture="environment" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0" onchange="onSlipPhoto(this)">
+<input type="file" id="fi-slip-gal" accept="image/*" style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0" onchange="onSlipPhoto(this)">
 </body>
 </html>
