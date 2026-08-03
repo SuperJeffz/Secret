@@ -328,13 +328,17 @@ const UID = 'superjeffz-main';
 let saveTimer = null;
 window.tasks = []; window.evts = [];
 
+let isSaving = false;
+
 setBadge('loading');
 onSnapshot(doc(db,'users',UID,'data','main'), snap => {
+  if(isSaving) return; // ป้องกัน snapshot ทับข้อมูลที่กำลัง save
   if(snap.exists()){ window.tasks=snap.data().tasks||[]; window.evts=snap.data().evts||[]; render(); }
   setBadge('synced');
 }, () => setBadge('offline'));
 
 window.scheduleSave = function(){
+  isSaving = true;
   setBadge('syncing');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async()=>{
@@ -343,6 +347,7 @@ window.scheduleSave = function(){
         {tasks:window.tasks, evts:window.evts, updatedAt:serverTimestamp()},{merge:true});
       setBadge('synced');
     }catch(e){ setBadge('offline'); }
+    finally{ setTimeout(()=>{ isSaving = false; }, 2000); }
   }, 800);
 };
 
