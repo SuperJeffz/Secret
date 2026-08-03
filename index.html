@@ -210,10 +210,12 @@ textarea.inp{resize:none}
       <label class="lbl">สคริปต์ / บทพูด (ถ้ามี)</label>
       <textarea class="inp" id="t-script" placeholder="ใส่บทพูด, caption, หรือสคริปต์สำหรับงานนี้..." style="height:100px"></textarea>
       <label class="lbl">รูปภาพ (ถ้ามี)</label>
-      <label class="photob" style="display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;cursor:pointer">
-        <span>📷 ถ่าย / เลือกรูป</span>
-        <input type="file" accept="image/*" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0" onchange="onPhoto(this)">
-      </label>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('cam')">📷 ถ่ายรูป</button>
+        <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('gal')">🖼️ คลัง</button>
+      </div>
+      <input type="file" id="fi-cam" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this)">
+      <input type="file" id="fi-gal" accept="image/*" style="display:none" onchange="onPhoto(this)">
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
@@ -261,10 +263,12 @@ textarea.inp{resize:none}
       </div>
       <div id="slip-section" class="hidden">
         <label class="lbl">รูปสลิปการโอนเงิน (ถ้ามี)</label>
-        <label class="photob" style="display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;cursor:pointer">
-          <span>📎 แนบสลิป</span>
-          <input type="file" accept="image/*" style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0" onchange="onSlipPhoto(this)">
-        </label>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('cam')">📷 ถ่ายสลิป</button>
+          <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('gal')">🖼️ เลือกสลิป</button>
+        </div>
+        <input type="file" id="fi-slip-cam" accept="image/*" capture="environment" style="display:none" onchange="onSlipPhoto(this)">
+        <input type="file" id="fi-slip-gal" accept="image/*" style="display:none" onchange="onSlipPhoto(this)">
         <div id="slip-wrap" class="hidden">
           <div class="phwrap"><img id="slip-prev" class="phprev"><button class="phdel" onclick="clearSlip()">✕</button></div>
         </div>
@@ -874,6 +878,15 @@ function showConfirm(title, name, onConfirm){
   d.querySelector('#conf-cancel').onclick=()=>d.remove();
   d.querySelector('#conf-ok').onclick=()=>{ d.remove(); onConfirm(); };
   d.onclick=e=>{ if(e.target===d) d.remove(); };
+}
+
+function triggerPhoto(type){
+  const el = document.getElementById(type==='cam'?'fi-cam':'fi-gal');
+  if(el) el.click();
+}
+function triggerSlip(type){
+  const el = document.getElementById(type==='cam'?'fi-slip-cam':'fi-slip-gal');
+  if(el) el.click();
 }
 
 render();
