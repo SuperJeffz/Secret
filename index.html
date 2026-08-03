@@ -16,7 +16,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; }
 body{
     font-family:'Sarabun',sans-serif;
     background:#0f0f0f;
-    color:#eeeeee; /* ปรับให้เห็นชัดบนพื้นหลังดำ */
+    color:#eeeeee;
     overscroll-behavior:none;
     display:flex;
     flex-direction:column;
@@ -77,7 +77,7 @@ input,textarea,button{font-family:'Sarabun',sans-serif}
     background:#f0f0eb;
     padding:14px;
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
-    color: #111; /* ข้อความใน Content ต้องเป็นสีเข้มเพราะพื้นหลังสว่าง */
+    color: #111;
 }
 
 #nav{
@@ -319,7 +319,7 @@ const app = initializeApp({
   apiKey:"AIzaSyDp3rlayAmk4l_8DUol98BPQBQPxLJbtTA",
   authDomain:"secretary-c3acf.firebaseapp.com",
   projectId:"secretary-c3acf",
-  storageBucket:"secretary-c3acf.firebasestorage.app",
+  storageBucket:"secretary-c3acf.appspot.com",
   messagingSenderId:"725117111513",
   appId:"1:725117111513:web:6057958c12b55bf96542c8"
 });
@@ -332,10 +332,46 @@ let isSaving = false;
 
 setBadge('loading');
 onSnapshot(doc(db,'users',UID,'data','main'), snap => {
-  if(isSaving) return; // ป้องกัน snapshot ทับข้อมูลที่กำลัง save
+  if(isSaving) return;
   if(snap.exists()){ window.tasks=snap.data().tasks||[]; window.evts=snap.data().evts||[]; render(); }
   setBadge('synced');
 }, () => setBadge('offline'));
+
+// ฟังก์ชันลบรูปภาพเก่าที่สุดเมื่อข้อมูลใกล้เต็ม (Auto-Cleanup Oldest Images)
+window.autoCleanOldImages = function() {
+  const MAX_BYTES = 800 * 1024; // ลิมิตความปลอดภัยที่ 800 KB ( Firestore Limit คือ 1MB )
+  
+  let totalSize = new Blob([JSON.stringify({tasks: window.tasks, evts: window.evts})]).size;
+  
+  while (totalSize > MAX_BYTES) {
+    let removedImage = false;
+    
+    // 1. ค้นหารูปภาพเก่าที่สุดใน tasks
+    for (let i = 0; i < window.tasks.length; i++) {
+      if (window.tasks[i].photo) {
+        window.tasks[i].photo = null;
+        removedImage = true;
+        break;
+      }
+    }
+    
+    // 2. ถ้าใน tasks ไม่มีรูปเหลืออยู่แล้ว ให้หาลบใน evts (สลิป) ต่อ
+    if (!removedImage) {
+      for (let i = 0; i < window.evts.length; i++) {
+        if (window.evts[i].slip) {
+          window.evts[i].slip = null;
+          removedImage = true;
+          break;
+        }
+      }
+    }
+    
+    // ถ้าไม่มีรูปภาพให้ลบแล้วแต่ยังเกิน ให้หลุดลูป
+    if (!removedImage) break;
+    
+    totalSize = new Blob([JSON.stringify({tasks: window.tasks, evts: window.evts})]).size;
+  }
+};
 
 window.scheduleSave = function(){
   isSaving = true;
@@ -343,13 +379,16 @@ window.scheduleSave = function(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async()=>{
     try{
+      // ตรวจสอบและวนลบรูปเก่าถ้ารวมแล้วขนาดเกิน 800KB
+      window.autoCleanOldImages();
+
       await setDoc(doc(db,'users',UID,'data','main'),
         {tasks:window.tasks, evts:window.evts, updatedAt:serverTimestamp()},{merge:true});
       setBadge('synced');
     }catch(e){ 
       setBadge('offline');
       console.error(e);
-      alert('❌ บันทึกล้มเหลว! ขนาดข้อมูล/รูปภาพอาจใหญ่เกินไป กรุณาลองลบรูปบางรูปแล้วลองใหม่อีกครั้ง');
+      alert('❌ บันทึกล้มเหลว! กรุณาลองใหม่อีกครั้ง');
     }
     finally{ setTimeout(()=>{ isSaving = false; }, 1500); }
   }, 500);
@@ -577,6 +616,7 @@ function setEditStage(s){
   document.querySelectorAll('.stg-btn').forEach(b=>{ const a=b.dataset.s===s; b.style.background=a?'#111':'#fff'; b.style.color=a?'#fff':'#111'; b.style.border=a?'none':'1px solid #ddd'; });
 }
 
+// ย่อรูปภาพให้ขนาดเล็กมาก (สูงสุด 400px, คุณภาพ 0.45)
 function onPhoto(input){
   if(!input||!input.files||!input.files[0]) return;
   const file = input.files[0];
@@ -584,13 +624,11 @@ function onPhoto(input){
   reader.onload = function(e){
     const img = new Image();
     img.onload = function(){
-      // ปรับขนาดความกว้าง/สูงสูงสุดไม่เกิน 500px เพื่อย่อไฟล์ให้เล็กลดปัญหาเกิน 1MB
-      const mx=500; let w=img.width, h=img.height;
+      const mx=400; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      // ลด Quality เหลือ 0.40 เพื่อให้ขนาดไฟล์เล็กที่สุด
-      photoB64=cv.toDataURL('image/jpeg',0.40);
+      photoB64=cv.toDataURL('image/jpeg',0.45);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
     };
@@ -607,12 +645,11 @@ function onSlipPhoto(input){
   reader.onload = function(e){
     const img = new Image();
     img.onload = function(){
-      // ปรับขนาดสลิปสูงสุดไม่เกิน 600px
-      const mx=600; let w=img.width, h=img.height;
+      const mx=400; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      slipB64=cv.toDataURL('image/jpeg',0.50);
+      slipB64=cv.toDataURL('image/jpeg',0.45);
       document.getElementById('slip-prev').src=slipB64;
       document.getElementById('slip-wrap').classList.remove('hidden');
     };
@@ -638,6 +675,7 @@ function saveTask(){
   if(!Array.isArray(window.tasks)) window.tasks=[];
   if(editTId) window.tasks=window.tasks.map(t=>t.id===editTId?{...t,...data}:t);
   else window.tasks.push({id:Date.now()+'', ...data});
+  
   window.scheduleSave&&window.scheduleSave();
   closeOv('ov-task'); render();
 }
@@ -781,6 +819,7 @@ function saveEvt(){
   const data={title,date,time:document.getElementById('e-time').value,note:document.getElementById('e-note').value,price:document.getElementById('e-price').value,slip:slipB64};
   if(editEId) window.evts=window.evts.map(e=>e.id===editEId?{...e,...data}:e);
   else window.evts.push({id:Date.now()+'',done:false,paid:false,...data});
+  
   window.scheduleSave&&window.scheduleSave();
   closeOv('ov-evt'); render();
 }
