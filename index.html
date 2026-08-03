@@ -214,8 +214,8 @@ textarea.inp{resize:none}
         <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('cam')">📷 ถ่ายรูป</button>
         <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerPhoto('gal')">🖼️ คลัง</button>
       </div>
-      <input type="file" id="fi-cam" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this)">
-      <input type="file" id="fi-gal" accept="image/*" style="display:none" onchange="onPhoto(this)">
+      <input type="file" id="fi-cam" accept="image/*" capture="environment" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onPhoto(this)">
+      <input type="file" id="fi-gal" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onPhoto(this)">
       <div id="ph-wrap" class="hidden">
         <div class="phwrap"><img id="ph-prev" class="phprev"><button class="phdel" onclick="clearPhoto()">✕</button></div>
       </div>
@@ -267,8 +267,8 @@ textarea.inp{resize:none}
           <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('cam')">📷 ถ่ายสลิป</button>
           <button type="button" class="photob" style="flex:1;margin-bottom:0" onclick="triggerSlip('gal')">🖼️ เลือกสลิป</button>
         </div>
-        <input type="file" id="fi-slip-cam" accept="image/*" capture="environment" style="display:none" onchange="onSlipPhoto(this)">
-        <input type="file" id="fi-slip-gal" accept="image/*" style="display:none" onchange="onSlipPhoto(this)">
+        <input type="file" id="fi-slip-cam" accept="image/*" capture="environment" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onSlipPhoto(this)">
+        <input type="file" id="fi-slip-gal" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px" onchange="onSlipPhoto(this)">
         <div id="slip-wrap" class="hidden">
           <div class="phwrap"><img id="slip-prev" class="phprev"><button class="phdel" onclick="clearSlip()">✕</button></div>
         </div>
@@ -573,7 +573,8 @@ function setEditStage(s){
 }
 
 function onPhoto(input){
-  const f=input.files[0]; if(!f) return;
+  if(!input.files||!input.files[0]) return;
+  const f=input.files[0];
   const r=new FileReader();
   r.onload=e=>{
     const img=new Image();
@@ -585,15 +586,17 @@ function onPhoto(input){
       photoB64=cv.toDataURL('image/jpeg',0.65);
       document.getElementById('ph-prev').src=photoB64;
       document.getElementById('ph-wrap').classList.remove('hidden');
+      try{input.value='';}catch(e){}
     };
     img.src=e.target.result;
   };
-  r.readAsDataURL(f); input.value='';
+  r.readAsDataURL(f);
 }
 function clearPhoto(){ photoB64=null; document.getElementById('ph-wrap').classList.add('hidden'); document.getElementById('ph-prev').src=''; }
 
 function onSlipPhoto(input){
-  const f=input.files[0]; if(!f) return;
+  if(!input.files||!input.files[0]) return;
+  const f=input.files[0];
   const r=new FileReader();
   r.onload=e=>{
     const img=new Image();
@@ -605,10 +608,11 @@ function onSlipPhoto(input){
       slipB64=cv.toDataURL('image/jpeg',0.8);
       document.getElementById('slip-prev').src=slipB64;
       document.getElementById('slip-wrap').classList.remove('hidden');
+      try{input.value='';}catch(e){}
     };
     img.src=e.target.result;
   };
-  r.readAsDataURL(f); input.value='';
+  r.readAsDataURL(f);
 }
 function clearSlip(){ slipB64=null; document.getElementById('slip-wrap').classList.add('hidden'); document.getElementById('slip-prev').src=''; }
 
