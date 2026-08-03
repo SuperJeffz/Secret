@@ -9,7 +9,6 @@
 <title>เลขาส่วนตัว</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* Reset & Base Styles */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -316,21 +315,33 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// Init Supabase
+// Configuration
 const SUPABASE_URL = "https://hcjgemqjpahprjugeywj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjamdlbXFqcGFocHJqdWdleXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQyNzIsImV4cCI6MjEwMTMyMDI3Mn0.mh1k9I-n-r-ybXNYxCBLFbfBGDs0g_S0b6-4LmPF-io";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Helper function สำหรับอัปโหลดภาพเข้า Supabase Storage Bucket 'photos'
+// REST API Direct Upload Function (Bypasses SDK & CORS Block Issues)
 window.uploadToSupabase = async function(fileBlob) {
   const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.jpg`;
-  const { data, error } = await supabaseClient.storage.from('photos').upload(fileName, fileBlob, {
-    contentType: 'image/jpeg',
-    upsert: true
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/photos/${fileName}`;
+
+  const res = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apiKey': SUPABASE_KEY,
+      'Content-Type': 'image/jpeg',
+      'x-upsert': 'true'
+    },
+    body: fileBlob
   });
-  if(error) throw error;
-  const { data: publicUrlData } = supabaseClient.storage.from('photos').getPublicUrl(fileName);
-  return publicUrlData.publicUrl;
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('Supabase Raw Upload Error:', errText);
+    throw new Error(errText);
+  }
+
+  return `${SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
 };
 
 // Init Firebase
@@ -666,7 +677,7 @@ async function saveTask(){
     closeOv('ov-task'); render();
   } catch(e) {
     console.error(e);
-    alert('❌ อัปโหลดรูปภาพล้มเหลว กรุณาลองใหม่อีกครั้ง');
+    alert('❌ อัปโหลดรูปภาพล้มเหลว: ' + e.message);
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = oldText;
@@ -830,7 +841,7 @@ async function saveEvt(){
     closeOv('ov-evt'); render();
   } catch(e) {
     console.error(e);
-    alert('❌ อัปโหลดสลิป ล้มเหลว กรุณาลองใหม่อีกครั้ง');
+    alert('❌ อัปโหลดสลิปล้มเหลว: ' + e.message);
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = oldText;
