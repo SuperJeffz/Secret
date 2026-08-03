@@ -885,8 +885,10 @@ function showConfirm(title, name, onConfirm){
 }
 
 function triggerPhoto(type){
-  const el = document.getElementById(type==='cam'?'fi-cam':'fi-gal');
-  if(el) el.click();
+  const id = type==='cam'?'fi-cam':'fi-gal';
+  const el = document.getElementById(id);
+  if(!el){ alert('ไม่พบ element: '+id); return; }
+  el.click();
 }
 function triggerSlip(type){
   const el = document.getElementById(type==='cam'?'fi-slip-cam':'fi-slip-gal');
