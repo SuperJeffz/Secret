@@ -410,9 +410,17 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 function render(){
   if(!Array.isArray(window.tasks)) return;
   const T=window.tasks, E=window.evts||[];
-  const todos=T.filter(t=>t.stage==='todo');
-  const drafts=T.filter(t=>t.stage==='draft');
-  const posts=T.filter(t=>t.stage==='post');
+  
+  // ฟังก์ชันเรียงลำดับรายการงานตามวันกำหนดส่ง (endDate) จากใกล้ไปไกล
+  const sortByDueDate = (a, b) => {
+    if(!a.endDate) return 1;
+    if(!b.endDate) return -1;
+    return new Date(a.endDate) - new Date(b.endDate);
+  };
+
+  const todos=T.filter(t=>t.stage==='todo').sort(sortByDueDate);
+  const drafts=T.filter(t=>t.stage==='draft').sort(sortByDueDate);
+  const posts=T.filter(t=>t.stage==='post').sort(sortByDueDate);
   const up=E.filter(e=>!e.done).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const dn=E.filter(e=>e.done).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const totA=dn.reduce((s,e)=>s+(parseFloat(e.price)||0),0);
