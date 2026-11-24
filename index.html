@@ -315,35 +315,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// Configuration
-const SUPABASE_URL = "https://hcjgemqjpahprjugeywj.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjamdlbXFqcGFocHJqdWdleXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQyNzIsImV4cCI6MjEwMTMyMDI3Mn0.mh1k9I-n-r-ybXNYxCBLFbfBGDs0g_S0b6-4LmPF-io";
-
-// REST API Direct Upload Function (Bypasses SDK & CORS Block Issues)
-window.uploadToSupabase = async function(fileBlob) {
-  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.jpg`;
-  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/photos/${fileName}`;
-
-  const res = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'apiKey': SUPABASE_KEY,
-      'Content-Type': 'image/jpeg',
-      'x-upsert': 'true'
-    },
-    body: fileBlob
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error('Supabase Raw Upload Error:', errText);
-    throw new Error(errText);
-  }
-
-  return `${SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
-};
-
 // Init Firebase
 const app = initializeApp({
   apiKey:"AIzaSyDp3rlayAmk4l_8DUol98BPQBQPxLJbtTA",
@@ -395,6 +366,30 @@ window.setBadge = setBadge;
 </script>
 
 <script>
+// ── Supabase Storage (อัปโหลดรูป) ─────────────────────────
+// อยู่ใน script ปกติ เพื่อไม่ให้พังตามเมื่อ Firebase โหลดไม่ขึ้น
+const SUPABASE_URL = "https://hcjgemqjpahprjugeywj.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjamdlbXFqcGFocHJqdWdleXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NDQyNzIsImV4cCI6MjEwMTMyMDI3Mn0.mh1k9I-n-r-ybXNYxCBLFbfBGDs0g_S0b6-4LmPF-io";
+
+window.uploadToSupabase = async function(fileBlob){
+  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.jpg`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${fileName}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Content-Type': 'image/jpeg'
+    },
+    body: fileBlob
+  });
+  if(!res.ok){
+    const t = await res.text();
+    console.error('Supabase Upload Error:', res.status, t);
+    throw new Error(res.status + ' ' + t);
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/photos/${fileName}`;
+};
+
 const PC={high:'#ef4444',medium:'#f59e0b',low:'#10b981'};
 const PL={high:'🔴 ด่วน',medium:'🟡 ปกติ',low:'🟢 ไม่เร่ง'};
 let curTab=0, selPri='medium', selStage='todo', schedId=null, editTId=null, editEId=null, photoFile=null, photoUrl=null, slipFile=null, slipUrl=null;
@@ -617,14 +612,19 @@ function setEditStage(s){
 
 function processImageFile(file, callback){
   const reader = new FileReader();
+  reader.onerror = () => alert('❌ อ่านไฟล์รูปไม่ได้ ลองเลือกรูปอื่น');
   reader.onload = function(e){
     const img = new Image();
+    img.onerror = () => alert('❌ เปิดรูปนี้ไม่ได้ ลองรูปอื่นหรือถ่ายใหม่');
     img.onload = function(){
       const mx=800; let w=img.width, h=img.height;
       if(w>mx||h>mx){ if(w>h){h=Math.round(h*mx/w);w=mx;}else{w=Math.round(w*mx/h);h=mx;} }
       const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      cv.toBlob((blob) => { callback(blob, cv.toDataURL('image/jpeg', 0.8)); }, 'image/jpeg', 0.8);
+      cv.toBlob((blob) => {
+        if(!blob){ alert('❌ แปลงรูปไม่สำเร็จ'); return; }
+        callback(blob, cv.toDataURL('image/jpeg', 0.8));
+      }, 'image/jpeg', 0.8);
     };
     img.src=e.target.result;
   };
@@ -633,7 +633,8 @@ function processImageFile(file, callback){
 
 function onPhoto(input){
   if(!input||!input.files||!input.files[0]) return;
-  processImageFile(input.files[0], (blob, previewUrl) => {
+  const f = input.files[0]; input.value='';
+  processImageFile(f, (blob, previewUrl) => {
     photoFile = blob;
     document.getElementById('ph-prev').src = previewUrl;
     document.getElementById('ph-wrap').classList.remove('hidden');
@@ -643,7 +644,8 @@ function clearPhoto(){ photoFile=null; photoUrl=null; document.getElementById('p
 
 function onSlipPhoto(input){
   if(!input||!input.files||!input.files[0]) return;
-  processImageFile(input.files[0], (blob, previewUrl) => {
+  const f = input.files[0]; input.value='';
+  processImageFile(f, (blob, previewUrl) => {
     slipFile = blob;
     document.getElementById('slip-prev').src = previewUrl;
     document.getElementById('slip-wrap').classList.remove('hidden');
